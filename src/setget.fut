@@ -13,8 +13,8 @@
 -- which will return the result of the expression of the lambda.
 --
 -- If you need to extend this module to support more elements, you need to
--- extend both the modules both in the local module `internal` and the
--- externally visible modules in the end of the file.
+-- extend both the modules in the local module `internal` and the externally
+-- visible modules in the end of the file.
 
 -- | Setting and getting values.
 module type setget = {

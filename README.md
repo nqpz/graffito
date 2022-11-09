@@ -28,4 +28,4 @@ Controls in the:
 
 - Create a new directory under `stencils/` with a `stencil.fut` file and
   a Makefile.
-- Extend the root `Makefile`
+- Extend the root `Makefile`.
