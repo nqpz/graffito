@@ -18,7 +18,7 @@
 
 -- | Setting and getting values.
 module type setget = {
-  type elems 'a
+  type elems 'base
   type^ f 'base 'a
   val set 'base: f base (elems base)
   val get 'base 'a: elems base -> f base a -> a
@@ -29,7 +29,7 @@ local module type setget_intermediate = {
   type^ t_setf 'base 'a
   val setf 'base 'a: (base -> a) -> t_setf base a
 
-  type elems 'a
+  type elems 'base
   type^ t_get 'base 'a
   val get 'base 'a: elems base -> (base -> t_get base a) -> a
 }
@@ -44,7 +44,7 @@ local module increment (prev: setget_intermediate) = specialize {
   type^ t_setf 'base 'a = base -> prev.t_setf base (base, a)
   def setf f x = prev.setf (f >-> \o -> (x, o))
 
-  type elems 'a = (a, prev.elems a)
+  type elems 'base = (base, prev.elems base)
   type^ t_get 'base 'a = base -> prev.t_get base a
   def get (x0, prev_xs) f = prev.get prev_xs (f x0)
 }
@@ -54,7 +54,7 @@ local module internal = {
     type^ t_setf 'base 'a = base -> a
     def setf f x = f x
 
-    type elems 'a = a
+    type elems 'base = base
     type^ t_get 'base 'a = a
     def get x f = f x
   }
