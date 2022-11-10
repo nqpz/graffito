@@ -1,17 +1,26 @@
+# Extend this list when you create new stencils.
+STENCILS=closingframe gameoflife
+
+
 .PHONY: all clean
 
-# FIXME: Make this Makefile smarter.
-all:
-	mkdir -p bin
+MAKES=$(patsubst %,_make/%,$(STENCILS))
+BINS=$(patsubst %,bin/%,$(STENCILS))
+CLEANS=$(patsubst %,_clean/%,$(STENCILS))
 
-	$(MAKE) -C stencils/gameoflife
-	ln -sf ../stencils/gameoflife/stencil bin/gameoflife
+all: $(MAKES) bin $(BINS)
 
-	$(MAKE) -C stencils/closingframe
-	ln -sf ../stencils/closingframe/stencil bin/closingframe
+_make/%:
+	$(MAKE) -C stencils$(shell echo $@ | sed 's/^_make//')
 
-clean:
-	$(MAKE) clean -C stencils/gameoflife
-	$(MAKE) clean -C stencils/closingframe
+bin:
+	mkdir bin
 
-	rm -r bin
+bin/%:
+	ln -s ../stencils$(shell echo $@ | sed 's/^bin//')/stencil $@
+
+_clean/%:
+	$(MAKE) clean -C stencils$(shell echo $@ | sed 's/^_clean//')
+
+clean: $(CLEANS)
+	rm -rf bin
