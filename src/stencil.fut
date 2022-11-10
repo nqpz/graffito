@@ -30,15 +30,15 @@ module type stencil_core = {
 }
 
 module type stencil_kind = {
-  include setget
+  module setget: setget
 
-  val collect_neighbors [h][w] 'cell: [h][w]cell -> index -> index -> elems (maybe cell)
+  val collect_neighbors [h][w] 'cell: [h][w]cell -> index -> index -> setget.elems (maybe cell)
 }
 
 module specialize_stencil_kind (stencil_kind: stencil_kind) (cell: { type cell }) = {
   open stencil_kind
   open cell
-  type elems = elems (maybe cell)
+  type elems = setget.elems (maybe cell)
 }
 
 module mk_stencil (stencil_core: stencil_core):

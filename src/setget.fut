@@ -22,6 +22,8 @@ module type setget = {
   type^ f 'base 'a
   val set 'base: f base (elems base)
   val get 'base 'a: elems base -> f base a -> a
+  val map 'from 'to: (from -> to) -> elems from -> elems to
+  val fold 'base: (base -> base -> base) -> elems base -> base
 }
 
 -- Used while doing the incremental building of the internal modules.
@@ -32,6 +34,9 @@ local module type setget_intermediate = {
   type elems 'base
   type^ t_get 'base 'a
   val get 'base 'a: elems base -> (base -> t_get base a) -> a
+
+  val map 'from 'to: (from -> to) -> elems from -> elems to
+  val fold 'base: (base -> base -> base) -> elems base -> base
 }
 
 local module specialize (sg: setget_intermediate) = {
@@ -46,7 +51,10 @@ local module increment (prev: setget_intermediate) = specialize {
 
   type elems 'base = (base, prev.elems base)
   type^ t_get 'base 'a = base -> prev.t_get base a
-  def get (x0, prev_xs) f = prev.get prev_xs (f x0)
+  def get (x, prev_xs) f = prev.get prev_xs (f x)
+
+  def map f (x, prev_xs) = (f x, prev.map f prev_xs)
+  def fold f (x, prev_xs) = f x (prev.fold f prev_xs)
 }
 
 local module internal = {
@@ -57,6 +65,9 @@ local module internal = {
     type elems 'base = base
     type^ t_get 'base 'a = a
     def get x f = f x
+
+    def map f x = f x
+    def fold _f x = x
   }
 
   module setget2 = increment setget1

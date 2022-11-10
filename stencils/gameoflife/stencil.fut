@@ -17,10 +17,7 @@ module gameoflife = mk_stencil {
       case #some x -> i32.bool x
       case #none -> 0
 
-    -- FIXME: Extend setget with a reduce function.
-    let n_neighbors = get neighbors (\a b c d e f g h ->
-                                       check a + check b + check c + check d
-                                       + check e + check f + check g + check h)
+    let n_neighbors = setget.fold (+) (setget.map check neighbors)
     in if alive
        then if n_neighbors < 2 || n_neighbors > 3
             then false
