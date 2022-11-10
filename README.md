@@ -14,8 +14,9 @@ Then run `make` to build all programs.
 
 The programs go in the `bin` directory:
 
-- `bin/closingframe`: A growing black frame around a square of colors.
 - `bin/gameoflife`: A very basic, no-frills implementation of Game of Life.
+- `bin/closingframe`: A growing black frame around a square of colors.
+- `bin/diamonds`: Growing diamonds.
 
 Pass `--help` to any program to see which options can be changed.
 

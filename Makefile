@@ -1,5 +1,5 @@
 # Extend this list when you create new stencils.
-STENCILS=closingframe gameoflife
+STENCILS=gameoflife closingframe diamonds
 
 
 .PHONY: all clean
