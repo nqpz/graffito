@@ -5,6 +5,7 @@ import "../../src/base"
 import "../../src/random"
 import "../../src/stencil"
 import "../../src/stencil_kinds"
+import "../../src/utils"
 
 module gameoflife = mk_stencil {
   open specialize_stencil_kind stencil_kinds.square {
@@ -31,17 +32,12 @@ module gameoflife = mk_stencil {
     then argb.white
     else argb.black
 
-  def random_alive rng =
-    let (rng, alive) = dist_int.rand (0, 1) rng
-    in (rng, bool.i64 alive)
-
-  type create_input = rng
-  type create_output = rng
-  def create_cells (h: i64) (w: i64) (rng: rng): ([h][w]cell, rng) =
-    let (rngs, cells) = rnge.split_rng (h * w) rng
-                        |> map random_alive
-                        |> unzip
-    in (unflatten h w cells, rnge.join_rng rngs)
+  open create_random_cells {
+    type cell = cell
+    def random_cell rng =
+      let (rng, alive) = dist_int.rand (0, 1) rng
+      in (rng, bool.i64 alive)
+  }
 }
 
 module lys = mk_stencil_lys gameoflife

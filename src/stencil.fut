@@ -15,11 +15,13 @@ module type setget_module = {
   module setget: setget
 }
 
+type^ create_cells 'cell 'create_input 'create_output = i64 -> i64 -> create_input -> ([][]cell, create_output)
+
 module type stencil = {
   include cell
   include create
 
-  val create_cells: i64 -> i64 -> create_input -> ([][]cell, create_output)
+  val create_cells: create_cells cell create_input create_output
 
   val step [h][w]: *[h][w]cell -> *[h][w]cell
 
@@ -33,7 +35,7 @@ module type stencil_core = {
   include create
   include setget_module
 
-  val create_cells: i64 -> i64 -> create_input -> ([][]cell, create_output)
+  val create_cells: create_cells cell create_input create_output
 
   val collect_neighbors [h][w]: collect_neighbors [h][w] cell (setget.elems (maybe cell))
 
