@@ -28,11 +28,11 @@ module type setget = {
 
 -- Used while doing the incremental building of the internal modules.
 local module type setget_intermediate = {
-  type^ t_setf '^base 'a
+  type^ t_setf '^base '^a
   val setf '^base '^a: (base -> a) -> t_setf base a
 
   type^ elems '^base
-  type^ t_get '^base 'a
+  type^ t_get '^base '^a
   val get '^base '^a: elems base -> (base -> t_get base a) -> a
 
   val map '^from '^to: (from -> to) -> elems from -> elems to
@@ -63,7 +63,7 @@ local module internal = {
     def setf f x = f x
 
     type^ elems '^base = base
-    type^ t_get '^base 'a = a
+    type^ t_get '^base '^a = a
     def get x f = f x
 
     def map f x = f x
