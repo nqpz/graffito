@@ -28,7 +28,7 @@ module type stencil = {
   val render [h][w]: [h][w]cell -> [h][w]argb.colour
 }
 
-type^ collect_neighbors [h][w] 'cell 'elems = [h][w]cell -> index -> index -> elems
+type^ collect_neighbors [h][w] 'cell 'elems = [h][w]cell -> index -> index -> (elems -> cell) -> cell
 
 module type stencil_core = {
   include cell
@@ -72,7 +72,7 @@ module mk_stencil (stencil_core: stencil_core):
   open stencil_core
 
   def step_cell [h][w] (cells: [h][w]cell) (y: i64) (x: i64) =
-    new_cell cells[y, x] (collect_neighbors cells y x)
+    collect_neighbors cells y x (new_cell cells[y, x])
 
   def step [h][w] (cells: *[h][w]cell): *[h][w]cell =
     tabulate_2d h w (\y x -> step_cell cells y x)
