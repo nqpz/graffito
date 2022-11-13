@@ -1,47 +1,29 @@
 import "base"
 import "setget"
-
-local def when 'a (cond: bool) (get: () -> a): maybe a =
-  if cond
-  then #some (get ())
-  else #none
+import "stencil"
 
 module stencil_kinds = {
   module cross = {
     module setget = setget4
 
-    def collect_neighbors [h][w] 'cell (cells: [h][w]cell) (y: index) (x: index) (f: setget.elems (maybe cell) -> cell): cell =
-      if y > 0 && y < h - 1 && x > 0 && x < w - 1
-      then f (setget.set (#some cells[y - 1, x])
-                         (#some cells[y, x - 1])
-                         (#some cells[y, x + 1])
-                         (#some cells[y + 1, x]))
-      else f (setget.set (when (y > 0) (\() -> cells[y - 1, x]))
-                         (when (x > 0) (\() -> cells[y, x - 1]))
-                         (when (x < w - 1) (\() -> cells[y, x + 1]))
-                         (when (y < h - 1) (\() -> cells[y + 1, x])))
+    def neighbor_offsets: setget.elems neighbor_offset =
+      setget.set (-1,  0, \s -> s.y > 0)
+                 ( 0, -1, \s -> s.x > 0)
+                 ( 0,  1, \s -> s.x < s.w - 1)
+                 ( 1,  0, \s -> s.y < s.h - 1)
   }
 
   module square = {
     module setget = setget8
 
-    def collect_neighbors [h][w] 'cell (cells: [h][w]cell) (y: index) (x: index) (f: setget.elems (maybe cell) -> cell): cell =
-      if y > 0 && y < h - 1 && x > 0 && x < w - 1
-      then f (setget.set (#some cells[y - 1, x - 1])
-                         (#some cells[y - 1, x])
-                         (#some cells[y - 1, x + 1])
-                         (#some cells[y, x - 1])
-                         (#some cells[y, x + 1])
-                         (#some cells[y + 1, x - 1])
-                         (#some cells[y + 1, x])
-                         (#some cells[y + 1, x + 1]))
-      else f (setget.set (when (y > 0 && x > 0) (\() -> cells[y - 1, x - 1]))
-                         (when (y > 0) (\() -> cells[y - 1, x]))
-                         (when (y > 0 && x < w - 1) (\() -> cells[y - 1, x + 1]))
-                         (when (x > 0) (\() -> cells[y, x - 1]))
-                         (when (x < w - 1) (\() -> cells[y, x + 1]))
-                         (when (y < h - 1 && x > 0) (\() -> cells[y + 1, x - 1]))
-                         (when (y < h - 1) (\() -> cells[y + 1, x]))
-                         (when (y < h - 1 && x < w - 1) (\() -> cells[y + 1, x + 1])))
+    def neighbor_offsets: setget.elems neighbor_offset =
+      setget.set (-1, -1, \s -> s.y > 0 && s.x > 0)
+                 (-1,  0, \s -> s.y > 0)
+                 (-1,  1, \s -> s.y > 0 && s.x < s.w - 1)
+                 ( 0, -1, \s -> s.x > 0)
+                 ( 0,  1, \s -> s.x < s.w - 1)
+                 ( 1, -1, \s -> s.y < s.h - 1 && s.x > 0)
+                 ( 1,  0, \s -> s.y < s.h - 1)
+                 ( 1,  1, \s -> s.y < s.h - 1 && s.x < s.w - 1)
   }
 }

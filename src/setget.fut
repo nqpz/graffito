@@ -1,4 +1,4 @@
--- | Library for setting and getting values.
+-- | Library for setting and getting values.  Also supports functional values.
 --
 -- This library exposes a number of modules setgetN, for N >= 1, which support
 -- setting a series of values and getting those values back.  For example, you
@@ -18,39 +18,39 @@
 
 -- | Setting and getting values.
 module type setget = {
-  type elems 'base
-  type^ f 'base 'a
-  val set 'base: f base (elems base)
-  val get 'base 'a: elems base -> f base a -> a
-  val map 'from 'to: (from -> to) -> elems from -> elems to
-  val fold 'base: (base -> base -> base) -> elems base -> base
+  type^ elems '^base
+  type^ f '^base '^a
+  val set '^base: f base (elems base)
+  val get '^base '^a: elems base -> f base a -> a
+  val map '^from '^to: (from -> to) -> elems from -> elems to
+  val fold '^base: (base -> base -> base) -> elems base -> base
 }
 
 -- Used while doing the incremental building of the internal modules.
 local module type setget_intermediate = {
-  type^ t_setf 'base 'a
-  val setf 'base 'a: (base -> a) -> t_setf base a
+  type^ t_setf '^base 'a
+  val setf '^base '^a: (base -> a) -> t_setf base a
 
-  type elems 'base
-  type^ t_get 'base 'a
-  val get 'base 'a: elems base -> (base -> t_get base a) -> a
+  type^ elems '^base
+  type^ t_get '^base 'a
+  val get '^base '^a: elems base -> (base -> t_get base a) -> a
 
-  val map 'from 'to: (from -> to) -> elems from -> elems to
-  val fold 'base: (base -> base -> base) -> elems base -> base
+  val map '^from '^to: (from -> to) -> elems from -> elems to
+  val fold '^base: (base -> base -> base) -> elems base -> base
 }
 
 local module specialize (sg: setget_intermediate) = {
   open sg
-  type^ f 'base 'a = base -> t_get base a
+  type^ f '^base '^a = base -> t_get base a
   def set = setf id
 }
 
 local module increment (prev: setget_intermediate) = specialize {
-  type^ t_setf 'base 'a = base -> prev.t_setf base (base, a)
+  type^ t_setf '^base '^a = base -> prev.t_setf base (base, a)
   def setf f x = prev.setf (f >-> \o -> (x, o))
 
-  type elems 'base = (base, prev.elems base)
-  type^ t_get 'base 'a = base -> prev.t_get base a
+  type^ elems '^base = (base, prev.elems base)
+  type^ t_get '^base '^a = base -> prev.t_get base a
   def get (x, prev_xs) f = prev.get prev_xs (f x)
 
   def map f (x, prev_xs) = (f x, prev.map f prev_xs)
@@ -59,11 +59,11 @@ local module increment (prev: setget_intermediate) = specialize {
 
 local module internal = {
   module setget1 = specialize {
-    type^ t_setf 'base 'a = base -> a
+    type^ t_setf '^base '^a = base -> a
     def setf f x = f x
 
-    type elems 'base = base
-    type^ t_get 'base 'a = a
+    type^ elems '^base = base
+    type^ t_get '^base 'a = a
     def get x f = f x
 
     def map f x = f x
@@ -79,7 +79,7 @@ local module internal = {
   module setget8 = increment setget7
 }
 
-local module expose (sg: setget): setget with f 'base 'a = sg.f base a = {
+local module expose (sg: setget): setget with f '^base '^a = sg.f base a = {
   open sg
 
   -- Provide a get function that applies the elements in the expected

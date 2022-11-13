@@ -13,9 +13,15 @@ local module tests = {
   def fold =
     let elems = setget6.set 10 20 30 40 100 200
     in setget6.fold (+) elems == 400
+
+  def functional =
+    let elems = setget2.set (+ 1) (* 2)
+                |> setget2.map (\f -> f 10)
+    in setget2.get elems (\a b -> a == 11 && b == 20)
 }
 
 def test () =
   assert tests.get true
   && assert tests.map true
   && assert tests.fold true
+  && assert tests.functional true

@@ -5,14 +5,9 @@ import "stencil"
 module create_random_cells (create_cell: {
   include cell
   val random_cell: rng -> (rng, cell)
-}): {
-  include cell
-  include create
-  val create_cells: create_cells cell create_input create_output
-} with cell = create_cell.cell
-  with create_input = rng
-  with create_output = rng =
-{
+}): create with cell = create_cell.cell
+           with create_input = rng
+           with create_output = rng = {
   type cell = create_cell.cell
   type create_input = rng
   type create_output = rng
