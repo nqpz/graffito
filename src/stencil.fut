@@ -16,28 +16,12 @@ module type create = {
 
 type^ neighbor_offset = (index, index, {y: index, x: index, h: i64, w: i64} -> bool)
 
-module type stencil_kind = {
+module type stencil_input = {
+  include create
+
   module setget: setget
 
   val neighbor_offsets: setget.elems neighbor_offset
-}
-
-module type specialized_stencil_kind = {
-  include cell
-  include stencil_kind
-}
-
-module specialize_stencil_kind (stencil_kind: stencil_kind) (cell: cell):
-  specialized_stencil_kind with cell = cell.cell
-                           with setget.f '^base '^a = stencil_kind.setget.f base a =
-{
-  open cell
-  open stencil_kind
-}
-
-module type stencil_input = {
-  include stencil_kind
-  include create
 
   val new_cell: cell -> setget.elems (maybe cell) -> cell
 

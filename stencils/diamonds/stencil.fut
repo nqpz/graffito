@@ -8,9 +8,9 @@ import "../../src/stencil_kinds"
 import "../../src/utils"
 
 module closingframe = mk_stencil {
-  open specialize_stencil_kind stencil_kinds.cross {
-    type cell = argb.colour
-  }
+  open stencil_kinds.cross
+
+  type cell = argb.colour
 
   def new_cell _cell neighbors =
     let mix_input (x: maybe argb.colour) =

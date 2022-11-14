@@ -8,9 +8,9 @@ import "../../src/stencil_kinds"
 import "../../src/utils"
 
 module gameoflife = mk_stencil {
-  open specialize_stencil_kind stencil_kinds.square {
-    type cell = bool -- alive or dead
-  }
+  open stencil_kinds.square
+
+  type cell = bool
 
   def new_cell alive neighbors =
     let check (mx: maybe bool): i32 =
