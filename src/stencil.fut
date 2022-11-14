@@ -43,20 +43,19 @@ module mk_stencil (stencil_input: stencil_input):
 {
   open stencil_input
 
-  def step_cell [h][w] (cells: [h][w]cell) (y: i64) (x: i64) =
-    let calc_cell = new_cell cells[y, x]
-    let indices = setget.map (\(dy, dx, cond) -> (y + dy, x + dx, cond))
-                             neighbor_offsets
+  def step_cell [h][w] (cells: [h][w]cell) (cell: cell) ((y, x): (index, index)) =
+    let calc_cell = new_cell cell
+    let indices = setget.map (\(dy, dx, cond) -> (y + dy, x + dx, cond)) neighbor_offsets
     in if y > 0 && y < h - 1 && x > 0 && x < w - 1
-       then #[unsafe] calc_cell (setget.map (\(y', x', _) -> #some cells[y', x']) indices)
+       then calc_cell (setget.map (\(y', x', _) -> #some (#[unsafe] cells[y', x'])) indices)
        else calc_cell (setget.map (\(y', x', cond) ->
                                      if (cond {y, x, h, w})
-                                     then #some cells[y', x']
+                                     then #some (#[unsafe] cells[y', x'])
                                      else #none)
                                   indices)
 
   def step [h][w] (cells: *[h][w]cell): *[h][w]cell =
-    tabulate_2d h w (step_cell cells)
+    map2 (map2 (step_cell cells)) cells (tabulate_2d h w (\y x -> (y, x)))
 
   def render [h][w]: [h][w]cell -> [h][w]argb.colour =
     map (map stencil_input.render_cell)
