@@ -14,7 +14,8 @@ module type create = {
   val create_cells: i64 -> i64 -> create_input -> ([][]cell, create_output)
 }
 
-type^ neighbor_offset = (index, index, {y: index, x: index, h: i64, w: i64} -> bool)
+type coordinate_state = {y: index, x: index, h: i64, w: i64}
+type^ neighbor_offset = (index, index, coordinate_state -> bool)
 
 module type stencil_input = {
   include create
@@ -22,6 +23,8 @@ module type stencil_input = {
   module setget: setget
 
   val neighbor_offsets: setget.elems neighbor_offset
+
+  val is_not_in_corner: coordinate_state -> bool
 
   val new_cell: cell -> setget.elems (maybe cell) -> cell
 
@@ -46,10 +49,11 @@ module mk_stencil (stencil_input: stencil_input):
   def step_cell [h][w] (cells: [h][w]cell) (cell: cell) ((y, x): (index, index)) =
     let calc_cell = new_cell cell
     let indices = setget.map (\(dy, dx, cond) -> (y + dy, x + dx, cond)) neighbor_offsets
-    in if y > 0 && y < h - 1 && x > 0 && x < w - 1
+    let cs = {y, x, h, w}
+    in if is_not_in_corner cs
        then calc_cell (setget.map (\(y', x', _) -> #some (#[unsafe] cells[y', x'])) indices)
        else calc_cell (setget.map (\(y', x', cond) ->
-                                     if (cond {y, x, h, w})
+                                     if (cond cs)
                                      then #some (#[unsafe] cells[y', x'])
                                      else #none)
                                   indices)
