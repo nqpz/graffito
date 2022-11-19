@@ -1,5 +1,7 @@
 # graffito
 
+![](screenshot.png)
+
 A small stencil framework for quick design and visualization.
 
 Requires [Futhark](http://futhark-lang.org) and SDL2 and SDL2-ttf
