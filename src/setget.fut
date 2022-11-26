@@ -16,14 +16,18 @@
 -- extend both the modules in the local module `internal` and the externally
 -- visible modules in the end of the file.
 
+import "base"
+
 -- | Setting and getting values.
 module type setget = {
   type^ elems '^base
   type^ f '^base '^a
   val set '^base: f base (elems base)
   val get '^base '^a: elems base -> f base a -> a
+  val zip '^t '^u: elems t -> elems u -> elems (t, u)
   val map '^from '^to: (from -> to) -> elems from -> elems to
   val fold '^base: (base -> base -> base) -> elems base -> base
+  val find 't 'u: (t -> maybe u) -> elems t -> maybe u
 }
 
 -- Used while doing the incremental building of the internal modules.
@@ -35,8 +39,10 @@ local module type setget_intermediate = {
   type^ t_get '^base '^a
   val get '^base '^a: elems base -> (base -> t_get base a) -> a
 
+  val zip '^t '^u: elems t -> elems u -> elems (t, u)
   val map '^from '^to: (from -> to) -> elems from -> elems to
   val fold '^base: (base -> base -> base) -> elems base -> base
+  val find 't 'u: (t -> maybe u) -> elems t -> maybe u
 }
 
 local module specialize (sg: setget_intermediate) = {
@@ -53,8 +59,13 @@ local module increment (prev: setget_intermediate) = specialize {
   type^ t_get '^base '^a = base -> prev.t_get base a
   def get (x, prev_xs) f = prev.get prev_xs (f x)
 
+  def zip (x, prev_xs) (y, prev_ys) = ((x, y), prev.zip prev_xs prev_ys)
   def map f (x, prev_xs) = (f x, prev.map f prev_xs)
   def fold f (x, prev_xs) = f x (prev.fold f prev_xs)
+  def find f (x, prev_xs) =
+    match f x
+    case #some y -> #some y
+    case #none -> prev.find f prev_xs
 }
 
 local module internal = {
@@ -66,8 +77,10 @@ local module internal = {
     type^ t_get '^base '^a = a
     def get x f = f x
 
+    def zip x y = (x, y)
     def map f x = f x
     def fold _f x = x
+    def find f x = f x
   }
 
   module setget2 = increment setget1
