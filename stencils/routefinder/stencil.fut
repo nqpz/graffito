@@ -45,7 +45,31 @@ module routefinder = mk_stencil {
   type cell = {ground: ground,
                building: maybe building,
                person: maybe person,
-               directions: directions}
+               directions: directions,
+               rng: rng}
+
+  def random_building (rng: rng): (rng, building) =
+    let (rng, building_i) = dist_int.rand (0, 3) rng
+    let building = if building_i == 0
+                   then #kitchen
+                   else if building_i == 1
+                   then #bathroom
+                   else if building_i == 2
+                   then #recroom
+                   else #bedroom
+    in (rng, building)
+
+  def update_building (cell: cell): cell =
+    let (rng, det) = dist.rand (0, 1) cell.rng
+    let (rng, building) =
+      if det < 0.001
+      then match cell.building
+           case #some _ -> (rng, #none)
+           case #none -> let (rng, b) = random_building rng
+                         in (rng, #some b)
+      else (rng, cell.building)
+    in cell with rng = rng
+            with building = building
 
   def update_direction_with_cost (cell: cell)
                                  (neighbors: setget.elems (maybe cell))
@@ -87,14 +111,15 @@ module routefinder = mk_stencil {
                  case #some cost -> {direction=dir, cost=cell.ground.movement_cost + cost}
                  case #none -> get_direction_with_cost cell.directions
 
-  def update_directions (cell: cell) (neighbors: setget.elems (maybe cell)): directions =
-    {kitchen= update_direction_with_cost cell neighbors (.kitchen)  #kitchen,
-     bathroom=update_direction_with_cost cell neighbors (.bathroom) #bathroom,
-     recroom= update_direction_with_cost cell neighbors (.recroom)  #recroom,
-     bedroom= update_direction_with_cost cell neighbors (.bedroom)  #bedroom}
+  def update_directions (cell: cell) (neighbors: setget.elems (maybe cell)): cell =
+    cell with directions = {kitchen= update_direction_with_cost cell neighbors (.kitchen)  #kitchen,
+                            bathroom=update_direction_with_cost cell neighbors (.bathroom) #bathroom,
+                            recroom= update_direction_with_cost cell neighbors (.recroom)  #recroom,
+                            bedroom= update_direction_with_cost cell neighbors (.bedroom)  #bedroom}
 
   def new_cell cell neighbors =
-    let cell = cell with directions = update_directions cell neighbors
+    let cell = update_building cell
+    let cell = update_directions cell neighbors
     in cell
 
   def render_cell (cell: cell) =
@@ -114,23 +139,12 @@ module routefinder = mk_stencil {
   open create_random_cells {
     type cell = cell
 
-    def random_building (rng: rng): (rng, building) =
-      let (rng, building_i) = dist_int.rand (0, 3) rng
-      let building = if building_i == 0
-                     then #kitchen
-                     else if building_i == 1
-                     then #bathroom
-                     else if building_i == 2
-                     then #recroom
-                     else #bedroom
-      in (rng, building)
-
     def random_cell rng =
       let (rng, movement_cost) = dist.rand (0, 1) rng
       let ground = {movement_cost}
 
       let (rng, building_det) = dist.rand (0, 1) rng
-      let has_building = building_det < 0.0005
+      let has_building = building_det < 0.0001
       let (rng, building: maybe building) =
         if has_building
         then let (rng, building) = random_building rng
@@ -155,7 +169,7 @@ module routefinder = mk_stencil {
                         recroom=empty_dwc,
                         bedroom=empty_dwc}
 
-      let cell = {ground, building, person, directions}
+      let cell = {ground, building, person, directions, rng}
       in (rng, cell)
   }
 }
