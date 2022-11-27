@@ -14,6 +14,10 @@ local module tests = {
     let elems = seq6.set 10 20 30 40 100 200
     in seq6.fold (+) elems == 400
 
+  def replicate =
+    let elems = seq4.replicate 5
+    in seq4.get elems (\a b c d -> a == 5 && b == 5 && c == 5 && d == 5)
+
   def functional =
     let elems = seq2.set (+ 1) (* 2)
                 |> seq2.map (\f -> f 10)
@@ -28,5 +32,6 @@ def test () =
   assert tests.get true
   && assert tests.map true
   && assert tests.fold true
+  && assert tests.replicate true
   && assert tests.functional true
   && assert tests.nonfunctional true

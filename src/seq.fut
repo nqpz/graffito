@@ -32,6 +32,7 @@ module type seq = {
   val map '^from '^to: (from -> to) -> elems from -> elems to
   val fold '^base: (base -> base -> base) -> elems base -> base
   val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
+  val replicate '^t: t -> elems t
 
   module nf: {
     type elems 'base
@@ -42,6 +43,7 @@ module type seq = {
     val map 'from 'to: (from -> to) -> elems from -> elems to
     val fold 'base: (base -> base -> base) -> elems base -> base
     val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
+    val replicate 't: t -> elems t
   }
 }
 
@@ -58,6 +60,7 @@ local module type seq_intermediate = {
   val map '^from '^to: (from -> to) -> elems from -> elems to
   val fold '^base: (base -> base -> base) -> elems base -> base
   val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
+  val replicate '^t: t -> elems t
 
   module nf: {
     type^ t_setf 'base 'a
@@ -71,6 +74,7 @@ local module type seq_intermediate = {
     val map 'from 'to: (from -> to) -> elems from -> elems to
     val fold 'base: (base -> base -> base) -> elems base -> base
     val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
+    val replicate 't: t -> elems t
   }
 }
 
@@ -101,6 +105,7 @@ local module increment (prev: seq_intermediate) = specialize {
     match f x
     case #some y -> #some y
     case #none -> prev.find_first f prev_xs
+  def replicate x = (x, prev.replicate x)
 
   module nf = {
     module prev = prev.nf
@@ -119,6 +124,7 @@ local module increment (prev: seq_intermediate) = specialize {
       match f x
       case #some y -> #some y
       case #none -> prev.find_first f prev_xs
+    def replicate x = (x, prev.replicate x)
   }
 }
 
@@ -135,6 +141,7 @@ local module internal = {
     def map f x = f x
     def fold _f x = x
     def find_first f x = f x
+    def replicate x = x
 
     module nf = {
       type^ t_setf 'base 'a = base -> a
@@ -148,6 +155,7 @@ local module internal = {
       def map = map
       def fold = fold
       def find_first = find_first
+      def replicate = replicate
     }
   }
 
