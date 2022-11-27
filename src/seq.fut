@@ -12,6 +12,10 @@
 --
 -- which will return the result of the expression of the lambda.
 --
+-- Each module has a submodule `nf` which only supports nonfunctional
+-- elements. This is useful if you need to store the result in an array or
+-- return it from a branch.
+--
 -- If you need to extend this module to support more elements, you need to
 -- extend both the modules in the local module `internal` and the externally
 -- visible modules in the end of the file.
@@ -28,6 +32,17 @@ module type seq = {
   val map '^from '^to: (from -> to) -> elems from -> elems to
   val fold '^base: (base -> base -> base) -> elems base -> base
   val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
+
+  module nf: {
+    type elems 'base
+    type^ f 'base 'a
+    val set 'base: f base (elems base)
+    val get 'base 'a: elems base -> f base a -> a
+    val zip 't 'u: elems t -> elems u -> elems (t, u)
+    val map 'from 'to: (from -> to) -> elems from -> elems to
+    val fold 'base: (base -> base -> base) -> elems base -> base
+    val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
+  }
 }
 
 -- Used while doing the incremental building of the internal modules.
@@ -43,12 +58,32 @@ local module type seq_intermediate = {
   val map '^from '^to: (from -> to) -> elems from -> elems to
   val fold '^base: (base -> base -> base) -> elems base -> base
   val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
+
+  module nf: {
+    type^ t_setf 'base 'a
+    val setf 'base 'a: (base -> a) -> t_setf base a
+
+    type elems 'base
+    type^ t_get 'base 'a
+    val get 'base 'a: elems base -> (base -> t_get base a) -> a
+
+    val zip 't 'u: elems t -> elems u -> elems (t, u)
+    val map 'from 'to: (from -> to) -> elems from -> elems to
+    val fold 'base: (base -> base -> base) -> elems base -> base
+    val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
+  }
 }
 
 local module specialize (sg: seq_intermediate) = {
   open sg
   type^ f '^base '^a = base -> t_get base a
   def set = setf id
+
+  module nf = {
+    open sg.nf
+    type^ f 'base 'a = base -> t_get base a
+    def set = setf id
+  }
 }
 
 local module increment (prev: seq_intermediate) = specialize {
@@ -66,6 +101,25 @@ local module increment (prev: seq_intermediate) = specialize {
     match f x
     case #some y -> #some y
     case #none -> prev.find_first f prev_xs
+
+  module nf = {
+    module prev = prev.nf
+
+    type^ t_setf 'base 'a = base -> prev.t_setf base (base, a)
+    def setf f x = prev.setf (f >-> \o -> (x, o))
+
+    type elems 'base = (base, prev.elems base)
+    type^ t_get 'base 'a = base -> prev.t_get base a
+    def get (x, prev_xs) f = prev.get prev_xs (f x)
+
+    def zip (x, prev_xs) (y, prev_ys) = ((x, y), prev.zip prev_xs prev_ys)
+    def map f (x, prev_xs) = (f x, prev.map f prev_xs)
+    def fold f (x, prev_xs) = f x (prev.fold f prev_xs)
+    def find_first f (x, prev_xs) =
+      match f x
+      case #some y -> #some y
+      case #none -> prev.find_first f prev_xs
+  }
 }
 
 local module internal = {
@@ -81,6 +135,20 @@ local module internal = {
     def map f x = f x
     def fold _f x = x
     def find_first f x = f x
+
+    module nf = {
+      type^ t_setf 'base 'a = base -> a
+      def setf f x = f x
+
+      type elems 'base = base
+      type^ t_get 'base 'a = a
+      def get = get
+
+      def zip = zip
+      def map = map
+      def fold = fold
+      def find_first = find_first
+    }
   }
 
   module seq2 = increment seq1
@@ -92,13 +160,20 @@ local module internal = {
   module seq8 = increment seq7
 }
 
-local module expose (sg: seq): seq with f '^base '^a = sg.f base a = {
+local module expose (sg: seq): seq with f '^base '^a = sg.f base a
+                                   with nf.f 'base 'a = sg.nf.f base a = {
   open sg
 
   -- Provide a get function that applies the elements in the expected
   -- order. It's only at this point that we know that `get` can be called with
   -- `set`, so we cannot have this fix earlier.
   def get = flip get set >-> get
+
+  module nf = {
+    open sg.nf
+
+    def get = flip get set >-> get
+  }
 }
 
 -- Externally visible.

@@ -18,6 +18,10 @@ local module tests = {
     let elems = seq2.set (+ 1) (* 2)
                 |> seq2.map (\f -> f 10)
     in seq2.get elems (\a b -> a == 11 && b == 20)
+
+  def nonfunctional =
+    let elems = seq2.nf.set 1 2
+    in seq2.nf.get elems (\a b -> a == 1 && b == 2)
 }
 
 def test () =
@@ -25,3 +29,4 @@ def test () =
   && assert tests.map true
   && assert tests.fold true
   && assert tests.functional true
+  && assert tests.nonfunctional true
