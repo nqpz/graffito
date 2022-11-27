@@ -34,8 +34,8 @@ module routefinder = mk_stencil {
                  | #south
                  | #no_direction
 
-  def raw_directions: setget.elems direction =
-    setget.set #north #west #east #south
+  def raw_directions: seq.elems direction =
+    seq.set #north #west #east #south
 
   type direction_with_cost = {direction: direction, cost: f32}
 
@@ -80,7 +80,7 @@ module routefinder = mk_stencil {
 
   module Directions = {
     def update_direction_with_cost (cell: cell)
-                                   (neighbors: setget.elems (maybe cell))
+                                   (neighbors: seq.elems (maybe cell))
                                    (get_direction_with_cost: directions -> direction_with_cost)
                                    (target: building): direction_with_cost =
       if cell.building == #some target
@@ -89,13 +89,13 @@ module routefinder = mk_stencil {
              maybe_join <-< maybe_map (.building)
            let make_direction_with_cell_cost dir =
              {direction=dir, cost=cell.ground.movement_cost}
-           let buildings = setget.map get_building neighbors
-           let dir_direct = setget.find_first
+           let buildings = seq.map get_building neighbors
+           let dir_direct = seq.find_first
                             (\(b, dir) ->
                                if b == #some target
                                then #some (make_direction_with_cell_cost dir)
                                else #none)
-                            (setget.zip buildings raw_directions)
+                            (seq.zip buildings raw_directions)
            in match dir_direct
               case #some d -> d
               case #none ->
@@ -105,8 +105,8 @@ module routefinder = mk_stencil {
                                                 then #none
                                                 else #some dwc.cost)
                                              <-< get_direction_with_cost <-< (.directions)))
-                let costs = setget.map get_cost neighbors
-                let (mcost, dir) = setget.fold (\(mcost0, dir0) (mcost1, dir1) ->
+                let costs = seq.map get_cost neighbors
+                let (mcost, dir) = seq.fold (\(mcost0, dir0) (mcost1, dir1) ->
                                                   match (mcost0, mcost1)
                                                   case (#some cost0, #some cost1) ->
                                                     if cost0 < cost1
@@ -114,12 +114,12 @@ module routefinder = mk_stencil {
                                                     else (mcost1, dir1)
                                                   case (#some _, #none) -> (mcost0, dir0)
                                                   case _ -> (mcost1, dir1))
-                                               (setget.zip costs raw_directions)
+                                               (seq.zip costs raw_directions)
                 in match mcost
                    case #some cost -> {direction=dir, cost=cell.ground.movement_cost + cost}
                    case #none -> {direction=#no_direction, cost=f32.inf}
 
-    def update (neighbors: setget.elems (maybe cell)) (cell: cell): cell =
+    def update (neighbors: seq.elems (maybe cell)) (cell: cell): cell =
       cell with directions = {kitchen= update_direction_with_cost cell neighbors (.kitchen)  #kitchen,
                               bathroom=update_direction_with_cost cell neighbors (.bathroom) #bathroom,
                               recroom= update_direction_with_cost cell neighbors (.recroom)  #recroom,

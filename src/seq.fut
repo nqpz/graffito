@@ -1,14 +1,14 @@
 -- | Library for setting and getting values.  Also supports functional values.
 --
--- This library exposes a number of modules setgetN, for N >= 1, which support
+-- This library exposes a number of modules seqN, for N >= 1, which support
 -- setting a series of values and getting those values back.  For example, you
 -- can have one piece of code produce some values:
 --
---    let elems = setget5.set x y z v w
+--    let elems = seq5.set x y z v w
 --
 -- And then another piece of code consume those values:
 --
---    let result = setget5.get elems (\a b c d e -> (a + b, c * d * e))
+--    let result = seq5.get elems (\a b c d e -> (a + b, c * d * e))
 --
 -- which will return the result of the expression of the lambda.
 --
@@ -19,7 +19,7 @@
 import "base"
 
 -- | Setting and getting values.
-module type setget = {
+module type seq = {
   type^ elems '^base
   type^ f '^base '^a
   val set '^base: f base (elems base)
@@ -31,7 +31,7 @@ module type setget = {
 }
 
 -- Used while doing the incremental building of the internal modules.
-local module type setget_intermediate = {
+local module type seq_intermediate = {
   type^ t_setf '^base '^a
   val setf '^base '^a: (base -> a) -> t_setf base a
 
@@ -45,13 +45,13 @@ local module type setget_intermediate = {
   val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
 }
 
-local module specialize (sg: setget_intermediate) = {
+local module specialize (sg: seq_intermediate) = {
   open sg
   type^ f '^base '^a = base -> t_get base a
   def set = setf id
 }
 
-local module increment (prev: setget_intermediate) = specialize {
+local module increment (prev: seq_intermediate) = specialize {
   type^ t_setf '^base '^a = base -> prev.t_setf base (base, a)
   def setf f x = prev.setf (f >-> \o -> (x, o))
 
@@ -69,7 +69,7 @@ local module increment (prev: setget_intermediate) = specialize {
 }
 
 local module internal = {
-  module setget1 = specialize {
+  module seq1 = specialize {
     type^ t_setf '^base '^a = base -> a
     def setf f x = f x
 
@@ -83,16 +83,16 @@ local module internal = {
     def find_first f x = f x
   }
 
-  module setget2 = increment setget1
-  module setget3 = increment setget2
-  module setget4 = increment setget3
-  module setget5 = increment setget4
-  module setget6 = increment setget5
-  module setget7 = increment setget6
-  module setget8 = increment setget7
+  module seq2 = increment seq1
+  module seq3 = increment seq2
+  module seq4 = increment seq3
+  module seq5 = increment seq4
+  module seq6 = increment seq5
+  module seq7 = increment seq6
+  module seq8 = increment seq7
 }
 
-local module expose (sg: setget): setget with f '^base '^a = sg.f base a = {
+local module expose (sg: seq): seq with f '^base '^a = sg.f base a = {
   open sg
 
   -- Provide a get function that applies the elements in the expected
@@ -102,11 +102,11 @@ local module expose (sg: setget): setget with f '^base '^a = sg.f base a = {
 }
 
 -- Externally visible.
-module setget1 = expose internal.setget1
-module setget2 = expose internal.setget2
-module setget3 = expose internal.setget3
-module setget4 = expose internal.setget4
-module setget5 = expose internal.setget5
-module setget6 = expose internal.setget6
-module setget7 = expose internal.setget7
-module setget8 = expose internal.setget8
+module seq1 = expose internal.seq1
+module seq2 = expose internal.seq2
+module seq3 = expose internal.seq3
+module seq4 = expose internal.seq4
+module seq5 = expose internal.seq5
+module seq6 = expose internal.seq6
+module seq7 = expose internal.seq7
+module seq8 = expose internal.seq8

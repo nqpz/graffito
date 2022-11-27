@@ -18,7 +18,7 @@ module gameoflife = mk_stencil {
       case #some x -> i32.bool x
       case #none -> 0
 
-    let n_neighbors = setget.fold (+) (setget.map check neighbors)
+    let n_neighbors = seq.fold (+) (seq.map check neighbors)
     in if alive
        then if n_neighbors < 2 || n_neighbors > 3
             then false

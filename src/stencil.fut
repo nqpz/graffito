@@ -1,6 +1,6 @@
 import "../lib/github.com/athas/matte/colour"
 import "base"
-import "setget"
+import "seq"
 
 module type cell = {
   type cell
@@ -20,13 +20,13 @@ type^ neighbor_offset = (index, index, coordinate_state -> bool)
 module type stencil_input = {
   include create
 
-  module setget: setget
+  module seq: seq
 
-  val neighbor_offsets: setget.elems neighbor_offset
+  val neighbor_offsets: seq.elems neighbor_offset
 
   val is_not_in_corner: coordinate_state -> bool
 
-  val new_cell: cell -> setget.elems (maybe cell) -> cell
+  val new_cell: cell -> seq.elems (maybe cell) -> cell
 
   val render_cell: cell -> argb.colour
 }
@@ -48,11 +48,11 @@ module mk_stencil (stencil_input: stencil_input):
 
   def step_cell [h][w] (cells: [h][w]cell) (cell: cell) ((y, x): (index, index)) =
     let calc_cell = new_cell cell
-    let indices = setget.map (\(dy, dx, cond) -> (y + dy, x + dx, cond)) neighbor_offsets
+    let indices = seq.map (\(dy, dx, cond) -> (y + dy, x + dx, cond)) neighbor_offsets
     let cs = {y, x, h, w}
     in if is_not_in_corner cs
-       then calc_cell (setget.map (\(y', x', _) -> #some (#[unsafe] cells[y', x'])) indices)
-       else calc_cell (setget.map (\(y', x', cond) ->
+       then calc_cell (seq.map (\(y', x', _) -> #some (#[unsafe] cells[y', x'])) indices)
+       else calc_cell (seq.map (\(y', x', cond) ->
                                      if (cond cs)
                                      then #some (#[unsafe] cells[y', x'])
                                      else #none)

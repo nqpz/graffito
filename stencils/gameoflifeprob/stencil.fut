@@ -39,8 +39,8 @@ module gameoflifeprob = mk_stencil {
       case #some c -> c.actual
       case #none -> 0
 
-    let ns = setget.map extract neighbors
-    in setget.get ns (\p0 p1 p2 p3 p4 p5 p6 p7 ->
+    let ns = seq.map extract neighbors
+    in seq.get ns (\p0 p1 p2 p3 p4 p5 p6 p7 ->
                         let two = two.calc p0 p1 p2 p3 p4 p5 p6 p7
                         let three = three.calc p0 p1 p2 p3 p4 p5 p6 p7
                         let p = cell.actual * (two + three)

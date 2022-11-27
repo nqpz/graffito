@@ -19,7 +19,7 @@ module closingframe = mk_stencil {
       case #none -> argb.black
 
     let mix color0 color1 = argb.add_linear color0 color1
-    in setget.get (setget.map mix_input neighbors)
+    in seq.get (seq.map mix_input neighbors)
                   (\a b c d -> mix (mix a b) (mix c d))
 
   def render_cell cell = cell

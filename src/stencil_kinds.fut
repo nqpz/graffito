@@ -1,5 +1,5 @@
 import "base"
-import "setget"
+import "seq"
 import "stencil"
 
 local module corner_conditions = {
@@ -11,22 +11,22 @@ local module corner_conditions = {
 
 module stencil_kinds = {
   module cross = {
-    module setget = setget4
+    module seq = seq4
     open corner_conditions.pixel_grid
 
-    def neighbor_offsets: setget.elems neighbor_offset =
-      setget.set (-1,  0, \s -> s.y > 0)
+    def neighbor_offsets: seq.elems neighbor_offset =
+      seq.set (-1,  0, \s -> s.y > 0)
                  ( 0, -1, \s -> s.x > 0)
                  ( 0,  1, \s -> s.x < s.w - 1)
                  ( 1,  0, \s -> s.y < s.h - 1)
   }
 
   module square = {
-    module setget = setget8
+    module seq = seq8
     open corner_conditions.pixel_grid
 
-    def neighbor_offsets: setget.elems neighbor_offset =
-      setget.set (-1, -1, \s -> s.y > 0 && s.x > 0)
+    def neighbor_offsets: seq.elems neighbor_offset =
+      seq.set (-1, -1, \s -> s.y > 0 && s.x > 0)
                  (-1,  0, \s -> s.y > 0)
                  (-1,  1, \s -> s.y > 0 && s.x < s.w - 1)
                  ( 0, -1, \s -> s.x > 0)
