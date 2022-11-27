@@ -80,26 +80,26 @@ module routefinder = mk_stencil {
                                    (target: building): direction_with_cost =
       if cell.building == #some target
       then {direction=#no_direction, cost=0}
-      else let make_direction_with_cell_cost dir =
-             {direction=dir, cost=cell.ground.movement_cost}
-           let get_cost: maybe cell -> maybe f32 =
-             maybe_join <-< (maybe_map ((\(dwc: direction_with_cost) ->
-                                           if dwc.direction == #no_direction
-                                           then #none
-                                           else #some dwc.cost)
-                                        <-< get_direction_with_cost <-< (.directions)))
-           let get_building : maybe cell -> maybe building =
+      else let get_building : maybe cell -> maybe building =
              maybe_join <-< maybe_map (.building)
-
+           let make_direction_with_cell_cost dir =
+             {direction=dir, cost=cell.ground.movement_cost}
            let buildings = setget.map get_building neighbors
-           let dir_direct = setget.find (\(b, dir) ->
-                                           if b == #some target
-                                           then #some (make_direction_with_cell_cost dir)
-                                           else #none)
-                                        (setget.zip buildings raw_directions)
+           let dir_direct = setget.find_first
+                            (\(b, dir) ->
+                               if b == #some target
+                               then #some (make_direction_with_cell_cost dir)
+                               else #none)
+                            (setget.zip buildings raw_directions)
            in match dir_direct
               case #some d -> d
               case #none ->
+                let get_cost: maybe cell -> maybe f32 =
+                  maybe_join <-< (maybe_map ((\(dwc: direction_with_cost) ->
+                                                if dwc.direction == #no_direction
+                                                then #none
+                                                else #some dwc.cost)
+                                             <-< get_direction_with_cost <-< (.directions)))
                 let costs = setget.map get_cost neighbors
                 let (mcost, dir) = setget.fold (\(mcost0, dir0) (mcost1, dir1) ->
                                                   match (mcost0, mcost1)

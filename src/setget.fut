@@ -27,7 +27,7 @@ module type setget = {
   val zip '^t '^u: elems t -> elems u -> elems (t, u)
   val map '^from '^to: (from -> to) -> elems from -> elems to
   val fold '^base: (base -> base -> base) -> elems base -> base
-  val find 't 'u: (t -> maybe u) -> elems t -> maybe u
+  val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
 }
 
 -- Used while doing the incremental building of the internal modules.
@@ -42,7 +42,7 @@ local module type setget_intermediate = {
   val zip '^t '^u: elems t -> elems u -> elems (t, u)
   val map '^from '^to: (from -> to) -> elems from -> elems to
   val fold '^base: (base -> base -> base) -> elems base -> base
-  val find 't 'u: (t -> maybe u) -> elems t -> maybe u
+  val find_first 't 'u: (t -> maybe u) -> elems t -> maybe u
 }
 
 local module specialize (sg: setget_intermediate) = {
@@ -62,10 +62,10 @@ local module increment (prev: setget_intermediate) = specialize {
   def zip (x, prev_xs) (y, prev_ys) = ((x, y), prev.zip prev_xs prev_ys)
   def map f (x, prev_xs) = (f x, prev.map f prev_xs)
   def fold f (x, prev_xs) = f x (prev.fold f prev_xs)
-  def find f (x, prev_xs) =
+  def find_first f (x, prev_xs) =
     match f x
     case #some y -> #some y
-    case #none -> prev.find f prev_xs
+    case #none -> prev.find_first f prev_xs
 }
 
 local module internal = {
@@ -80,7 +80,7 @@ local module internal = {
     def zip x y = (x, y)
     def map f x = f x
     def fold _f x = x
-    def find f x = f x
+    def find_first f x = f x
   }
 
   module setget2 = increment setget1
