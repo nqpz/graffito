@@ -114,7 +114,7 @@ module routefinder = mk_stencil {
                    case #some cost -> {direction=dir, cost=cell.ground.movement_cost + cost}
                    case #none -> get_direction_with_cost cell.directions
 
-    def update (cell: cell) (neighbors: setget.elems (maybe cell)): cell =
+    def update (neighbors: setget.elems (maybe cell)) (cell: cell): cell =
       cell with directions = {kitchen= update_direction_with_cost cell neighbors (.kitchen)  #kitchen,
                               bathroom=update_direction_with_cost cell neighbors (.bathroom) #bathroom,
                               recroom= update_direction_with_cost cell neighbors (.recroom)  #recroom,
@@ -122,9 +122,9 @@ module routefinder = mk_stencil {
   }
 
   def new_cell cell neighbors =
-    let cell = Building.update cell
-    let cell = Directions.update cell neighbors
-    in cell
+    cell
+    |> Building.update
+    |> Directions.update neighbors
 
   def render_cell (cell: cell) =
     match cell.directions.kitchen.direction
