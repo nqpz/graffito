@@ -112,7 +112,7 @@ module routefinder = mk_stencil {
                                                (setget.zip costs raw_directions)
                 in match mcost
                    case #some cost -> {direction=dir, cost=cell.ground.movement_cost + cost}
-                   case #none -> get_direction_with_cost cell.directions
+                   case #none -> {direction=#no_direction, cost=f32.inf}
 
     def update (neighbors: setget.elems (maybe cell)) (cell: cell): cell =
       cell with directions = {kitchen= update_direction_with_cost cell neighbors (.kitchen)  #kitchen,
