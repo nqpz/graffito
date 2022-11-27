@@ -129,7 +129,7 @@ module routefinder = mk_stencil {
 
   def new_cell cell neighbors =
     cell
-    |> Building.update
+    |> id -- Building.update
     |> Directions.update neighbors
 
   def render_cell (cell: cell) =
