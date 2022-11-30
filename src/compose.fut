@@ -37,7 +37,7 @@ local module mk_compose (function: function)
 
 local module internal = {
   -- def increment = ((>->) (<-<) <-<)
-  def increment c f g = (c f) (g <-<)
+  def increment c f g = (c f) (g <-<) -- equivalent to the above
 
   module compose1 = { def compose = (>->) }
   module compose2 = { def compose = increment compose1.compose }
