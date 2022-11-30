@@ -98,7 +98,7 @@ module routefinder = mk_stencil {
              {direction=dir, cost=cell.ground.movement_cost}
            let buildings = seq.map get_building neighbors
            let dir_direct = seq.find_first
-                            (\(b, dir) ->
+                            (\(b, dir): maybe Direction.t_with_cost ->
                                if b == #some target
                                then #some (make_direction_with_cell_cost dir)
                                else #none)
