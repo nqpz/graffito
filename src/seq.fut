@@ -36,7 +36,6 @@ local module type seq_core_f = {
   -- | Pick the last element if the function returns false for all previous
   -- elements.
   val find_first' 't: (t -> bool) -> elems t -> t
-  val replicate '^t: t -> elems t
   val range: elems i32
   val length: i32
 }
@@ -51,7 +50,6 @@ local module type seq_core_nf = {
   val foldr 'base: (base -> base -> base) -> elems base -> base
   val find_first '^t 'u: (t -> maybe u) -> elems t -> maybe u
   val find_first' 't: (t -> bool) -> elems t -> t
-  val replicate 't: t -> elems t
   val range: elems i32
   val length: i32
 }
@@ -66,11 +64,13 @@ module type seq = {
   module nf: {
     include seq_core_nf
 
+    val replicate 't: t -> elems t
     val random 't: elems t -> rng -> (t, rng)
   }
 
   include seq_core_f
 
+  val replicate '^t: t -> elems t
   val random '^t: elems t -> rng -> (t, rng)
 }
 
@@ -88,7 +88,6 @@ local module type seq_intermediate_f = {
   val foldr '^base: (base -> base -> base) -> elems base -> base
   val find_first '^t 'u: (t -> maybe u) -> elems t -> maybe u
   val find_first' 't: (t -> bool) -> elems t -> t
-  val replicate '^t: t -> elems t
   val range: elems i32
   val length: i32
 }
@@ -106,7 +105,6 @@ local module type seq_intermediate_nf = {
   val foldr 'base: (base -> base -> base) -> elems base -> base
   val find_first '^t 'u: (t -> maybe u) -> elems t -> maybe u
   val find_first' 't: (t -> bool) -> elems t -> t
-  val replicate 't: t -> elems t
   val range: elems i32
   val length: i32
 }
@@ -160,7 +158,6 @@ local module increment (prev: seq_intermediate) = specialize {
     if f x
     then x
     else prev.find_first' f prev_xs
-  def replicate x = (x, prev.replicate x)
   def range = (0i32, prev.map (+ 1i32) prev.range)
   def length = 1 + prev.length
 
@@ -185,7 +182,6 @@ local module increment (prev: seq_intermediate) = specialize {
       if f x
       then x
       else prev.find_first' f prev_xs
-    def replicate x = (x, prev.replicate x)
     def range = (0i32, prev.map (+ 1i32) prev.range)
     def length = length
   }
@@ -205,7 +201,6 @@ local module internal = {
     def foldr _f x = x
     def find_first f x = f x
     def find_first' _f x = x
-    def replicate x = x
     def range = 0i32
     def length = 1i32
 
@@ -222,7 +217,6 @@ local module internal = {
       def foldr = foldr
       def find_first = find_first
       def find_first' = find_first'
-      def replicate = replicate
       def range = range
       def length = length
     }
@@ -241,6 +235,8 @@ local module extend_core (seq_core: seq_core): seq with f '^base '^a = seq_core.
                                                    with nf.f 'base 'a = seq_core.nf.f base a = {
   open seq_core
 
+  def replicate x = map (const x) range
+
   def random elems rng =
     let (rng, i) = dist_i32.rand (0, length - 1) rng
     let (_, x) = find_first' ((.0) >-> (== i)) (zip range elems)
@@ -248,6 +244,8 @@ local module extend_core (seq_core: seq_core): seq with f '^base '^a = seq_core.
 
   module nf = {
     open seq_core.nf
+
+    def replicate x = map (const x) range
 
     def random elems rng =
       let (rng, i) = dist_i32.rand (0, length - 1) rng
