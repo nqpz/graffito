@@ -77,7 +77,7 @@ local module tests = {
     in elem == 30
 }
 
-def test () =
+entry test =
   assert tests.get true
   && assert tests.zip true
   && assert tests.map true
