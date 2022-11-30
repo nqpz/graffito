@@ -6,64 +6,64 @@ import "../../src/random"
 import "../../src/stencil"
 import "../../src/stencil_kinds"
 import "../../src/utils"
+import "../../src/seq"
 
 module routefinder = mk_stencil {
   open stencil_kinds.cross
 
   type ground = {movement_cost: f32}
 
-  type building = #kitchen
-                | #bathroom
-                | #recroom
-                | #bedroom
-                | #library
+  module Direction = {
+    type t = #north
+           | #west
+           | #east
+           | #south
+           | #no_direction -- kind of have this one around, but also ignore it a bit
 
-  def building_color (building: building): argb.colour =
-    match building
-    case #kitchen -> argb.green
-    case #bathroom -> argb.brown
-    case #recroom -> argb.magenta
-    case #bedroom -> argb.yellow
-    case #library -> argb.orange
+    type t_with_cost = {direction: t, cost: f32}
 
-  type person = {target: building, priority: f32}
+    def all: seq.elems t =
+      seq.set #north #west #east #south
+  }
 
-  type direction = #north
-                 | #west
-                 | #east
-                 | #south
-                 | #no_direction
+  local module Building = {
+    module seq = seq5.nf
 
-  def raw_directions: seq.elems direction =
-    seq.set #north #west #east #south
+    type t = #kitchen
+           | #bathroom
+           | #recroom
+           | #bedroom
+           | #library
 
-  type direction_with_cost = {direction: direction, cost: f32}
+    def all: seq.elems t =
+      seq.set #kitchen #bathroom #recroom #bedroom #library
 
-  type directions = {kitchen: direction_with_cost,
-                     bathroom: direction_with_cost,
-                     recroom: direction_with_cost,
-                     bedroom: direction_with_cost,
-                     library: direction_with_cost}
+    def color (building: t): argb.colour =
+      match building
+      case #kitchen -> argb.green
+      case #bathroom -> argb.brown
+      case #recroom -> argb.magenta
+      case #bedroom -> argb.yellow
+      case #library -> argb.orange
+
+    def random (rng: rng): (t, rng) =
+      seq.random all rng
+  }
+
+  local module Directions = {
+    type t = Building.seq.elems Direction.t_with_cost
+  }
+
+  type person = {target: Building.t, priority: f32}
 
   type cell = {ground: ground,
-               building: maybe building,
+               building: maybe Building.t,
+               directions: Directions.t,
                person: maybe person,
-               directions: directions,
                rng: rng}
 
   module Building = {
-    def random (rng: rng): (rng, building) =
-      let (rng, building_i) = dist_int.rand (0, 4) rng
-      let building = if building_i == 0
-                     then #kitchen
-                     else if building_i == 1
-                     then #bathroom
-                     else if building_i == 2
-                     then #recroom
-                     else if building_i == 3
-                     then #bedroom
-                     else #library
-      in (rng, building)
+    open Building
 
     def update (cell: cell): cell =
       let (rng, det) = dist.rand (0, 1) cell.rng
@@ -71,7 +71,7 @@ module routefinder = mk_stencil {
         if det < 0.0001
         then match cell.building
              case #some _ -> (rng, #none)
-             case #none -> let (rng, b) = random rng
+             case #none -> let (b, rng) = random rng
                            in (rng, #some b)
         else (rng, cell.building)
       in cell with rng = rng
@@ -79,13 +79,20 @@ module routefinder = mk_stencil {
   }
 
   module Directions = {
+    open Directions
+
+    def get_direction_with_cost (target: Building.t) (directions: t)
+                                : Direction.t_with_cost =
+      (Building.seq.find_first'
+       (\(_dir, dir_target) -> dir_target == target)
+       (Building.seq.zip directions Building.all)).0
+
     def update_direction_with_cost (cell: cell)
                                    (neighbors: seq.elems (maybe cell))
-                                   (get_direction_with_cost: directions -> direction_with_cost)
-                                   (target: building): direction_with_cost =
+                                   (target: Building.t): Direction.t_with_cost =
       if cell.building == #some target
       then {direction=#no_direction, cost=0}
-      else let get_building : maybe cell -> maybe building =
+      else let get_building : maybe cell -> maybe Building.t =
              maybe_join <-< maybe_map (.building)
            let make_direction_with_cell_cost dir =
              {direction=dir, cost=cell.ground.movement_cost}
@@ -95,36 +102,33 @@ module routefinder = mk_stencil {
                                if b == #some target
                                then #some (make_direction_with_cell_cost dir)
                                else #none)
-                            (seq.zip buildings raw_directions)
+                            (seq.zip buildings Direction.all)
            in match dir_direct
               case #some d -> d
               case #none ->
                 let get_cost: maybe cell -> maybe f32 =
-                  maybe_join <-< (maybe_map ((\(dwc: direction_with_cost) ->
+                  maybe_join <-< (maybe_map ((\(dwc: Direction.t_with_cost) ->
                                                 if dwc.direction == #no_direction
                                                 then #none
                                                 else #some dwc.cost)
-                                             <-< get_direction_with_cost <-< (.directions)))
+                                             <-< get_direction_with_cost target <-< (.directions)))
                 let costs = seq.map get_cost neighbors
-                let (mcost, dir) = seq.fold (\(mcost0, dir0) (mcost1, dir1) ->
-                                                  match (mcost0, mcost1)
-                                                  case (#some cost0, #some cost1) ->
-                                                    if cost0 < cost1
-                                                    then (mcost0, dir0)
-                                                    else (mcost1, dir1)
-                                                  case (#some _, #none) -> (mcost0, dir0)
-                                                  case _ -> (mcost1, dir1))
-                                               (seq.zip costs raw_directions)
+                let (mcost, dir) = seq.foldr (\(mcost0, dir0) (mcost1, dir1) ->
+                                                match (mcost0, mcost1)
+                                                case (#some cost0, #some cost1) ->
+                                                  if cost0 < cost1
+                                                  then (mcost0, dir0)
+                                                  else (mcost1, dir1)
+                                                case (#some _, #none) -> (mcost0, dir0)
+                                                case _ -> (mcost1, dir1))
+                                             (seq.zip costs Direction.all)
                 in match mcost
                    case #some cost -> {direction=dir, cost=cell.ground.movement_cost + cost}
                    case #none -> {direction=#no_direction, cost=f32.inf}
 
     def update (neighbors: seq.elems (maybe cell)) (cell: cell): cell =
-      cell with directions = {kitchen= update_direction_with_cost cell neighbors (.kitchen)  #kitchen,
-                              bathroom=update_direction_with_cost cell neighbors (.bathroom) #bathroom,
-                              recroom= update_direction_with_cost cell neighbors (.recroom)  #recroom,
-                              bedroom= update_direction_with_cost cell neighbors (.bedroom)  #bedroom,
-                              library= update_direction_with_cost cell neighbors (.library)  #library}
+      cell with directions = Building.seq.map (update_direction_with_cost cell neighbors)
+                                              Building.all
   }
 
   def new_cell cell neighbors =
@@ -133,7 +137,7 @@ module routefinder = mk_stencil {
     |> Directions.update neighbors
 
   def render_cell (cell: cell) =
-    match cell.directions.kitchen.direction
+    match (Directions.get_direction_with_cost #kitchen cell.directions).direction
     case #north -> argb.blue
     case #west -> argb.yellow
     case #east -> argb.violet
@@ -142,7 +146,7 @@ module routefinder = mk_stencil {
 
   -- def render_cell (cell: cell) =
   --   let background = argb.gray cell.ground.movement_cost
-  --   in match maybe_map building_color cell.building
+  --   in match maybe_map Building.color cell.building
   --      case #some c -> c -- argb.mix 0.5 background 0.5 c
   --      case #none -> argb.scale background 0.1
 
@@ -155,9 +159,9 @@ module routefinder = mk_stencil {
 
       let (rng, building_det) = dist.rand (0, 1) rng
       let has_building = building_det < 0.0001
-      let (rng, building: maybe building) =
+      let (rng, building: maybe Building.t) =
         if has_building
-        then let (rng, building) = Building.random rng
+        then let (building, rng) = Building.random rng
              in (rng, #some building)
         else (rng, #none)
 
@@ -168,17 +172,13 @@ module routefinder = mk_stencil {
              in (rng, person_det < 0.0001)
       let (rng, person: maybe person) =
         if has_person
-        then let (rng, target) = Building.random rng
+        then let (target, rng) = Building.random rng
              let (rng, priority) = dist.rand (0, 1) rng
              in (rng, #some {target, priority})
         else (rng, #none)
 
-      let empty_dwc: direction_with_cost = {direction=#no_direction, cost=f32.inf}
-      let directions = {kitchen=empty_dwc,
-                        bathroom=empty_dwc,
-                        recroom=empty_dwc,
-                        bedroom=empty_dwc,
-                        library=empty_dwc}
+      let empty_dwc: Direction.t_with_cost = {direction=#no_direction, cost=f32.inf}
+      let directions = Building.seq.set empty_dwc empty_dwc empty_dwc empty_dwc empty_dwc
 
       let cell = {ground, building, person, directions, rng}
       in (rng, cell)

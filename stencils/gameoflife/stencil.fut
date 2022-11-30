@@ -18,7 +18,7 @@ module gameoflife = mk_stencil {
       case #some x -> i32.bool x
       case #none -> 0
 
-    let n_neighbors = seq.fold (+) (seq.map check neighbors)
+    let n_neighbors = seq.foldr (+) (seq.map check neighbors)
     in if alive
        then if n_neighbors < 2 || n_neighbors > 3
             then false
@@ -35,8 +35,8 @@ module gameoflife = mk_stencil {
   open create_random_cells {
     type cell = cell
     def random_cell rng =
-      let (rng, alive) = dist_int.rand (0, 1) rng
-      in (rng, bool.i64 alive)
+      let (rng, alive) = dist_i32.rand (0, 1) rng
+      in (rng, bool.i32 alive)
   }
 }
 

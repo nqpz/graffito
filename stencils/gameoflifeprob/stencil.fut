@@ -56,7 +56,7 @@ module gameoflifeprob = mk_stencil {
     in argb.from_rgba c.r c.g c.b 1
 
   def create_gradient_cell (h: i64) (rng: rng) (y: index): (rng, cell) =
-    let (rng, k) = dist_int.rand (0, h) rng
+    let (rng, k) = dist_i64.rand (0, h) rng
     let cell = build_cell (if k < y then #alive else #dead) 0 rng
     in (rng, cell)
 
@@ -73,7 +73,7 @@ module gameoflifeprob = mk_stencil {
   -- open create_random_cells {
   --   type cell = cell
   --   def random_cell rng =
-  --     let (rng, alive) = dist_int.rand (0, 1) rng
+  --     let (rng, alive) = dist_i32.rand (0, 1) rng
   --     let cell = build_cell (if alive == 1 then #alive else #dead) 0 rng
   --     in (rng, cell)
   -- }
