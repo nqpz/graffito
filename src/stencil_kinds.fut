@@ -3,7 +3,9 @@ import "seq"
 import "stencil"
 
 -- Temporary modules.  The real ones seem to be causing problems in this setting
--- even though they maybe work in the interpreter?
+-- even though they maybe work in the interpreter?  These modules only correctly
+-- implement the things that are needed by the stencil code and skips over the
+-- unneeded parts.
 module seq4' = {
   type^ elems '^base = (base, base, base, base)
   type^ f '^base '^a = base -> base -> base -> base -> a
