@@ -38,6 +38,7 @@ local module type seq_core_f = {
   val find_first' 't: (t -> bool) -> elems t -> t
   val range: elems i32
   val length: i32
+  val accessors 't: elems (elems t -> t)
 }
 
 local module type seq_core_nf = {
@@ -45,13 +46,6 @@ local module type seq_core_nf = {
   type^ f 'base 'a
   val set 'base: f base (elems base)
   val get 'base 'a: elems base -> f base a -> a
-  val zip 't 'u: elems t -> elems u -> elems (t, u)
-  val map 'from 'to: (from -> to) -> elems from -> elems to
-  val foldr 'base: (base -> base -> base) -> elems base -> base
-  val find_first '^t 'u: (t -> maybe.t u) -> elems t -> maybe.t u
-  val find_first' 't: (t -> bool) -> elems t -> t
-  val range: elems i32
-  val length: i32
 }
 
 local module type seq_core = {
@@ -61,17 +55,9 @@ local module type seq_core = {
 }
 
 module type seq = {
-  module nf: {
-    include seq_core_nf
-
-    val replicate 't: t -> elems t
-    val assoc_find 't 'u: (t -> bool) -> elems t -> elems u -> u
-    val random 't: elems t -> rng -> (t, rng)
-    val from_list 't [n]: [n]t -> elems t
-  }
+  module nf: seq_core_nf
 
   include seq_core_f
-
   val replicate '^t: t -> elems t
   val assoc_find '^t '^u: (t -> bool) -> elems t -> elems u -> u
   val random '^t: elems t -> rng -> (t, rng)
@@ -94,6 +80,7 @@ local module type seq_intermediate_f = {
   val find_first' 't: (t -> bool) -> elems t -> t
   val range: elems i32
   val length: i32
+  val accessorsf '^a '^t: (a -> elems t) -> elems (a -> t)
 }
 
 local module type seq_intermediate_nf = {
@@ -103,14 +90,6 @@ local module type seq_intermediate_nf = {
   type elems 'base
   type^ t_get 'base 'a
   val get 'base 'a: elems base -> (base -> t_get base a) -> a
-
-  val zip 't 'u: elems t -> elems u -> elems (t, u)
-  val map 'from 'to: (from -> to) -> elems from -> elems to
-  val foldr 'base: (base -> base -> base) -> elems base -> base
-  val find_first '^t 'u: (t -> maybe.t u) -> elems t -> maybe.t u
-  val find_first' 't: (t -> bool) -> elems t -> t
-  val range: elems i32
-  val length: i32
 }
 
 local module type seq_intermediate = {
@@ -129,12 +108,14 @@ local module type seq_intermediate_extra = {
   include seq_intermediate_f
   type^ f '^base '^a = base -> t_get base a
   val set '^base: f base (elems base)
+  val accessors 't: elems (elems t -> t)
 }
 
 local module specialize (seq: seq_intermediate) = {
   open seq
   type^ f '^base '^a = base -> t_get base a
   def set = setf id
+  def accessors = accessorsf id
 
   module nf = {
     open seq.nf
@@ -164,6 +145,9 @@ local module increment (prev: seq_intermediate) = specialize {
     else prev.find_first' f prev_xs
   def range = (0i32, prev.map (+ 1i32) prev.range)
   def length = 1 + prev.length
+  def accessorsf '^a '^t (f: a -> elems t) =
+    (\root -> (f root).0,
+     prev.accessorsf (f >-> (.1)))
 
   module nf = {
     local module prev = prev.nf
@@ -174,20 +158,6 @@ local module increment (prev: seq_intermediate) = specialize {
     type elems 'base = (base, prev.elems base)
     type^ t_get 'base 'a = base -> prev.t_get base a
     def get (x, prev_xs) f = prev.get prev_xs (f x)
-
-    def zip (x, prev_xs) (y, prev_ys) = ((x, y), prev.zip prev_xs prev_ys)
-    def map f (x, prev_xs) = (f x, prev.map f prev_xs)
-    def foldr f (x, prev_xs) = f x (prev.foldr f prev_xs)
-    def find_first f (x, prev_xs) =
-      match f x
-      case #some y -> #some y
-      case #none -> prev.find_first f prev_xs
-    def find_first' f (x, prev_xs) =
-      if f x
-      then x
-      else prev.find_first' f prev_xs
-    def range = (0i32, prev.map (+ 1i32) prev.range)
-    def length = length
   }
 }
 
@@ -207,6 +177,7 @@ local module internal = {
     def find_first' _f x = x
     def range = 0i32
     def length = 1i32
+    def accessorsf f = \root -> f root
 
     module nf = {
       type^ t_setf 'base 'a = base -> a
@@ -215,14 +186,6 @@ local module internal = {
       type elems 'base = base
       type^ t_get 'base 'a = a
       def get = get
-
-      def zip = zip
-      def map = map
-      def foldr = foldr
-      def find_first = find_first
-      def find_first' = find_first'
-      def range = range
-      def length = length
     }
   }
 
@@ -254,24 +217,7 @@ local module extend_core (seq_core: seq_core): seq with f '^base '^a = seq_core.
   def from_list xs =
     map (\i -> xs[i]) range
 
-  module nf = {
-    open seq_core.nf
-
-    def replicate x = map (const x) range
-
-    def assoc_find check auxs elems =
-      zip auxs elems
-      |> find_first' ((.0) >-> check)
-      |> (.1)
-
-    def random elems rng =
-      let (rng, i) = dist_i32.rand (0, length - 1) rng
-      let x = assoc_find (== i) range elems
-      in (x, rng)
-
-    def from_list xs =
-      map (\i -> xs[i]) range
-  }
+  module nf = seq_core.nf
 }
 
 local module expose (seq: seq_intermediate_extra)

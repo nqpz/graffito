@@ -35,7 +35,10 @@ module routefinder = mk_stencil {
   }
 
   local module Building = {
-    module seq = seq5.nf
+    module seq = seq5
+
+    def from_nf = flip seq5.nf.get seq5.set
+    def to_nf = flip seq5.get seq5.nf.set
 
     type t = #kitchen
            | #bathroom
@@ -45,6 +48,8 @@ module routefinder = mk_stencil {
 
     def all: seq.elems t =
       seq.set #kitchen #bathroom #recroom #bedroom #library
+
+    def get_accessor t = seq.assoc_find (== t) all seq.accessors
 
     def random (rng: rng): (t, rng) =
       seq.random all rng
@@ -59,14 +64,16 @@ module routefinder = mk_stencil {
   }
 
   local module Building_directions = {
-    type t = Building.seq.elems {cost: f32, shortest_direction: Direction.t}
+    type base = {cost: f32, shortest_direction: Direction.t}
+    type^ t = Building.seq.elems base
+    type t' = Building.seq.nf.elems base
   }
 
   type person = {target: Building.t, priority: f32}
 
   type cell = {ground: ground,
                building: maybe.t Building.t,
-               building_directions: Building_directions.t,
+               building_directions: Building_directions.t',
                person: maybe.t person,
                rng: rng}
 
@@ -89,20 +96,19 @@ module routefinder = mk_stencil {
   module Building_directions = {
     open Building_directions
 
-    local def direction_cost (target: Building.t)
+    local def direction_cost (accessor: Building_directions.t -> Building_directions.base)
+                             (target: Building.t)
                              (neighbor: cell)
                              : f32 =
       neighbor.building
       |> maybe.bind (\building -> if building == target then #some 0 else #none)
-      |> maybe.or (\() -> (Building.seq.assoc_find
-                           (== target) Building.all
-                           neighbor.building_directions).cost)
+      |> maybe.or (\() -> (accessor (Building.from_nf neighbor.building_directions)).cost)
 
     def update (neighbors: seq.elems (maybe.t cell)) (cell: cell): cell =
-      let update_building (building, building_direction) =
+      let update_building (accessor, (building, building_direction)) =
         let (dir, subcost) =
           neighbors
-          |> seq.map (maybe.map (direction_cost building))
+          |> seq.map (maybe.map (direction_cost accessor building))
           |> seq.map (maybe.or (\() -> f32.inf))
           |> seq.zip Direction.all
           |> seq.foldr (\(d0, c0) (d1, c1) -> if c0 < c1 then (d0, c0) else (d1, c1))
@@ -110,8 +116,11 @@ module routefinder = mk_stencil {
                    then building_direction.shortest_direction
                    else dir
         in {cost=subcost + cell.ground.movement_cost, shortest_direction=dir'}
-      in cell with building_directions = Building.seq.zip Building.all cell.building_directions
+      in cell with building_directions = Building.from_nf cell.building_directions
+                                         |> Building.seq.zip Building.all
+                                         |> Building.seq.zip Building.seq.accessors
                                          |> Building.seq.map update_building
+                                         |> Building.to_nf
   }
 
   def new_cell cell neighbors =
@@ -119,11 +128,14 @@ module routefinder = mk_stencil {
     |> id -- Building.update
     |> Building_directions.update neighbors
 
+  local def get_kitchen = Building.get_accessor #kitchen
+
   def render_cell (cell: cell) =
-    let target = #kitchen -- Just this one for now
-    in Building.seq.assoc_find (== target) Building.all cell.building_directions
-       |> (.shortest_direction)
-       |> Direction.color
+    cell.building_directions
+    |> Building.from_nf
+    |> get_kitchen -- Just render the kitchens for now
+    |> (.shortest_direction)
+    |> Direction.color
 
   open create_random_cells {
     type cell = cell
@@ -159,8 +171,9 @@ module routefinder = mk_stencil {
       let dirs' = Building.seq.from_list dirs
       let rng = rnge.join_rng dir_rngs
 
-      let building_directions: Building_directions.t =
+      let building_directions =
         Building.seq.map (\dir -> {cost=f32.inf, shortest_direction=dir}) dirs'
+        |> Building.to_nf
 
       let cell = {ground, building, person, building_directions, rng}
       in (rng, cell)
