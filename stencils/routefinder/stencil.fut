@@ -91,8 +91,8 @@ module routefinder = mk_stencil {
       let update_building building =
         let (shortest_direction, subcost) =
           neighbors
-          |> seq.map (maybe.map (direction_cost building)
-                                >-> maybe.or (\() -> f32.inf))
+          |> seq.map (maybe.map (direction_cost building))
+          |> seq.map (maybe.or (\() -> f32.inf))
           |> seq.zip Direction.all
           |> seq.foldr (\(d0, c0) (d1, c1) -> if c0 < c1 then (d0, c0) else (d1, c1))
         in {cost=subcost + cell.ground.movement_cost, shortest_direction}
