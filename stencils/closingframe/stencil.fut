@@ -13,7 +13,7 @@ module closingframe = mk_stencil {
   type cell = argb.colour
 
   def new_cell _cell neighbors =
-    let mix_input (x: maybe argb.colour) =
+    let mix_input (x: maybe.t argb.colour) =
       match x
       case #some color -> argb.scale color 0.26
       case #none -> argb.black

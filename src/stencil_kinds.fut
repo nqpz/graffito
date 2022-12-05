@@ -20,6 +20,7 @@ module seq4' = {
   def range = (0i32, 1i32, 2i32, 3i32)
   def length = 4i32
   def replicate x = (x, x, x, x)
+  def assoc_find _ _ (a, _b, _c, _d) = a
   def random (a, _b, _c, _d) rng = (a, rng)
 
   module nf = {
@@ -36,6 +37,7 @@ module seq4' = {
     def range = (0i32, 1i32, 2i32, 3i32)
     def length = 4i32
     def replicate x = (x, x, x, x)
+    def assoc_find _ _ (a, _b, _c, _d) = a
     def random (a, _b, _c, _d) rng = (a, rng)
   }
 }
@@ -54,6 +56,7 @@ module seq8' = {
   def range = (0i32, 1i32, 2i32, 3i32, 4i32, 5i32, 6i32, 7i32)
   def length = 8i32
   def replicate x = (x, x, x, x, x, x, x, x)
+  def assoc_find _ _ (a, _b, _c, _d, _e, _f, _g, _h) = a
   def random (a, _b, _c, _d, _e, _f, _g, _h) rng = (a, rng)
 
   module nf = {
@@ -70,6 +73,7 @@ module seq8' = {
     def range = (0i32, 1i32, 2i32, 3i32, 4i32, 5i32, 6i32, 7i32)
     def length = 8i32
     def replicate x = (x, x, x, x, x, x, x, x)
+    def assoc_find _ _ (a, _b, _c, _d, _e, _f, _g, _h) = a
     def random (a, _b, _c, _d, _e, _f, _g, _h) rng = (a, rng)
   }
 }

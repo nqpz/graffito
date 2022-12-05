@@ -32,7 +32,7 @@ local module type seq_core_f = {
   val zip '^t '^u: elems t -> elems u -> elems (t, u)
   val map '^from '^to: (from -> to) -> elems from -> elems to
   val foldr '^base: (base -> base -> base) -> elems base -> base
-  val find_first '^t 'u: (t -> maybe u) -> elems t -> maybe u
+  val find_first '^t 'u: (t -> maybe.t u) -> elems t -> maybe.t u
   -- | Pick the last element if the function returns false for all previous
   -- elements.
   val find_first' 't: (t -> bool) -> elems t -> t
@@ -48,7 +48,7 @@ local module type seq_core_nf = {
   val zip 't 'u: elems t -> elems u -> elems (t, u)
   val map 'from 'to: (from -> to) -> elems from -> elems to
   val foldr 'base: (base -> base -> base) -> elems base -> base
-  val find_first '^t 'u: (t -> maybe u) -> elems t -> maybe u
+  val find_first '^t 'u: (t -> maybe.t u) -> elems t -> maybe.t u
   val find_first' 't: (t -> bool) -> elems t -> t
   val range: elems i32
   val length: i32
@@ -65,12 +65,14 @@ module type seq = {
     include seq_core_nf
 
     val replicate 't: t -> elems t
+    val assoc_find 't 'u: (t -> bool) -> elems t -> elems u -> u
     val random 't: elems t -> rng -> (t, rng)
   }
 
   include seq_core_f
 
   val replicate '^t: t -> elems t
+  val assoc_find '^t '^u: (t -> bool) -> elems t -> elems u -> u
   val random '^t: elems t -> rng -> (t, rng)
 }
 
@@ -86,7 +88,7 @@ local module type seq_intermediate_f = {
   val zip '^t '^u: elems t -> elems u -> elems (t, u)
   val map '^from '^to: (from -> to) -> elems from -> elems to
   val foldr '^base: (base -> base -> base) -> elems base -> base
-  val find_first '^t 'u: (t -> maybe u) -> elems t -> maybe u
+  val find_first '^t 'u: (t -> maybe.t u) -> elems t -> maybe.t u
   val find_first' 't: (t -> bool) -> elems t -> t
   val range: elems i32
   val length: i32
@@ -103,7 +105,7 @@ local module type seq_intermediate_nf = {
   val zip 't 'u: elems t -> elems u -> elems (t, u)
   val map 'from 'to: (from -> to) -> elems from -> elems to
   val foldr 'base: (base -> base -> base) -> elems base -> base
-  val find_first '^t 'u: (t -> maybe u) -> elems t -> maybe u
+  val find_first '^t 'u: (t -> maybe.t u) -> elems t -> maybe.t u
   val find_first' 't: (t -> bool) -> elems t -> t
   val range: elems i32
   val length: i32
@@ -237,9 +239,13 @@ local module extend_core (seq_core: seq_core): seq with f '^base '^a = seq_core.
 
   def replicate x = map (const x) range
 
+  def assoc_find check auxs elems =
+    (zip auxs elems
+     |> find_first' ((.0) >-> check)).1
+
   def random elems rng =
     let (rng, i) = dist_i32.rand (0, length - 1) rng
-    let (_, x) = find_first' ((.0) >-> (== i)) (zip range elems)
+    let x = assoc_find (== i) range elems
     in (x, rng)
 
   module nf = {
@@ -247,9 +253,13 @@ local module extend_core (seq_core: seq_core): seq with f '^base '^a = seq_core.
 
     def replicate x = map (const x) range
 
+    def assoc_find check auxs elems =
+      (zip auxs elems
+       |> find_first' ((.0) >-> check)).1
+
     def random elems rng =
       let (rng, i) = dist_i32.rand (0, length - 1) rng
-      let (_, x) = find_first' ((.0) >-> (== i)) (zip range elems)
+      let x = assoc_find (== i) range elems
       in (x, rng)
   }
 }

@@ -13,7 +13,7 @@ module gameoflife = mk_stencil {
   type cell = bool
 
   def new_cell alive neighbors =
-    let check (mx: maybe bool): i32 =
+    let check (mx: maybe.t bool): i32 =
       match mx
       case #some x -> i32.bool x
       case #none -> 0

@@ -26,7 +26,7 @@ module type stencil_input = {
 
   val is_not_in_corner: coordinate_state -> bool
 
-  val new_cell: cell -> seq.elems (maybe cell) -> cell
+  val new_cell: cell -> seq.elems (maybe.t cell) -> cell
 
   val render_cell: cell -> argb.colour
 }

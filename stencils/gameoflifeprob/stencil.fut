@@ -34,7 +34,7 @@ module gameoflifeprob = mk_stencil {
     in (p', rng)
 
   def new_cell (cell: cell) neighbors =
-    let extract (mx: maybe cell): f32 =
+    let extract (mx: maybe.t cell): f32 =
       match mx
       case #some c -> c.actual
       case #none -> 0

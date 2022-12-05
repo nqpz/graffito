@@ -18,9 +18,6 @@ module routefinder = mk_stencil {
            | #west
            | #east
            | #south
-           | #no_direction -- kind of have this one around, but also ignore it a bit
-
-    type t_with_cost = {direction: t, cost: f32}
 
     def all: seq.elems t =
       seq.set #north #west #east #south
@@ -51,15 +48,15 @@ module routefinder = mk_stencil {
   }
 
   local module Building_directions = {
-    type t = Building.seq.elems Direction.t_with_cost
+    type t = Building.seq.elems {cost: f32, shortest_direction: Direction.t}
   }
 
   type person = {target: Building.t, priority: f32}
 
   type cell = {ground: ground,
-               building: maybe Building.t,
+               building: maybe.t Building.t,
                building_directions: Building_directions.t,
-               person: maybe person,
+               person: maybe.t person,
                rng: rng}
 
   module Building = {
@@ -81,53 +78,25 @@ module routefinder = mk_stencil {
   module Building_directions = {
     open Building_directions
 
-    def get_direction_with_cost (target: Building.t) (building_directions: t)
-                                : Direction.t_with_cost =
-      (Building.seq.find_first'
-       (\(_dir, dir_target) -> dir_target == target)
-       (Building.seq.zip building_directions Building.all)).0
+    local def direction_cost (target: Building.t)
+                             (neighbor: cell)
+                             : f32 =
+      neighbor.building
+      |> maybe.bind (\building -> if building == target then #some 0 else #none)
+      |> maybe.or (\() -> (Building.seq.assoc_find
+                           (== target) Building.all
+                           neighbor.building_directions).cost)
 
-    def update_direction_with_cost (cell: cell)
-                                   (neighbors: seq.elems (maybe cell))
-                                   (target: Building.t): Direction.t_with_cost =
-      if cell.building == #some target
-      then {direction=#no_direction, cost=0}
-      else let get_building : maybe cell -> maybe Building.t =
-             maybe_join <-< maybe_map (.building)
-           let make_direction_with_cell_cost dir =
-             {direction=dir, cost=cell.ground.movement_cost}
-           let buildings = seq.map get_building neighbors
-           let dir_direct = seq.find_first
-                            (\(b, dir): maybe Direction.t_with_cost ->
-                               if b == #some target
-                               then #some (make_direction_with_cell_cost dir)
-                               else #none)
-                            (seq.zip buildings Direction.all)
-           in match dir_direct
-              case #some d -> d
-              case #none ->
-                let get_cost: maybe cell -> maybe f32 =
-                  maybe_join <-< (maybe_map ((\(dwc: Direction.t_with_cost) ->
-                                                if dwc.direction == #no_direction
-                                                then #none
-                                                else #some dwc.cost)
-                                             <-< get_direction_with_cost target <-< (.building_directions)))
-                let costs = seq.map get_cost neighbors
-                let (mcost, dir) = seq.foldr (\(mcost0, dir0) (mcost1, dir1) ->
-                                                match (mcost0, mcost1)
-                                                case (#some cost0, #some cost1) ->
-                                                  if cost0 < cost1
-                                                  then (mcost0, dir0)
-                                                  else (mcost1, dir1)
-                                                case (#some _, #none) -> (mcost0, dir0)
-                                                case _ -> (mcost1, dir1))
-                                             (seq.zip costs Direction.all)
-                in match mcost
-                   case #some cost -> {direction=dir, cost=cell.ground.movement_cost + cost}
-                   case #none -> {direction=#no_direction, cost=f32.inf}
-
-    def update (neighbors: seq.elems (maybe cell)) (cell: cell): cell =
-      cell with building_directions = Building.seq.map (update_direction_with_cost cell neighbors) Building.all
+    def update (neighbors: seq.elems (maybe.t cell)) (cell: cell): cell =
+      let update_building building =
+        let (shortest_direction, subcost) =
+          neighbors
+          |> seq.map (maybe.map (direction_cost building)
+                                >-> maybe.or (\() -> f32.inf))
+          |> seq.zip Direction.all
+          |> seq.foldr (\(d0, c0) (d1, c1) -> if c0 < c1 then (d0, c0) else (d1, c1))
+        in {cost=subcost + cell.ground.movement_cost, shortest_direction}
+      in cell with building_directions = Building.seq.map update_building Building.all
   }
 
   def new_cell cell neighbors =
@@ -136,18 +105,16 @@ module routefinder = mk_stencil {
     |> Building_directions.update neighbors
 
   def render_cell (cell: cell) =
-    match (Building_directions.get_direction_with_cost #kitchen cell.building_directions).direction
-    case #north -> argb.blue
-    case #west -> argb.yellow
-    case #east -> argb.violet
-    case #south -> argb.red
-    case #no_direction -> argb.black
-
-  -- def render_cell (cell: cell) =
-  --   let background = argb.gray cell.ground.movement_cost
-  --   in match maybe_map Building.color cell.building
-  --      case #some c -> c -- argb.mix 0.5 background 0.5 c
-  --      case #none -> argb.scale background 0.1
+    let target = #kitchen -- Just this one for now
+    let {cost, shortest_direction} =
+      Building.seq.assoc_find (== target) Building.all cell.building_directions
+    in if f32.isinf cost
+       then argb.black
+       else match shortest_direction
+            case #north -> argb.blue
+            case #west -> argb.yellow
+            case #east -> argb.violet
+            case #south -> argb.red
 
   open create_random_cells {
     type cell = cell
@@ -158,7 +125,7 @@ module routefinder = mk_stencil {
 
       let (rng, building_det) = dist.rand (0, 1) rng
       let has_building = building_det < 0.0001
-      let (rng, building: maybe Building.t) =
+      let (rng, building: maybe.t Building.t) =
         if has_building
         then let (building, rng) = Building.random rng
              in (rng, #some building)
@@ -169,15 +136,15 @@ module routefinder = mk_stencil {
         then (rng, false)
         else let (rng, person_det) = dist.rand (0, 1) rng
              in (rng, person_det < 0.0001)
-      let (rng, person: maybe person) =
+      let (rng, person: maybe.t person) =
         if has_person
         then let (target, rng) = Building.random rng
              let (rng, priority) = dist.rand (0, 1) rng
              in (rng, #some {target, priority})
         else (rng, #none)
 
-      let empty_dwc: Direction.t_with_cost = {direction=#no_direction, cost=f32.inf}
-      let building_directions = Building.seq.set empty_dwc empty_dwc empty_dwc empty_dwc empty_dwc
+      let building_directions: Building_directions.t =
+        Building.seq.replicate {cost=f32.inf, shortest_direction=#south}
 
       let cell = {ground, building, person, building_directions, rng}
       in (rng, cell)
