@@ -28,7 +28,7 @@ local module tests = {
 
   def find_first_basic =
     let elems = seq6.set 10 20 30 40 100 200
-    let first: maybe i64 =
+    let first: maybe.t i64 =
       seq6.find_first (\k -> if k > 25 && k < 35
                              then #some (i64.i32 k)
                              else #none) elems
@@ -36,7 +36,7 @@ local module tests = {
 
   def find_first_direction_important =
     let elems = seq6.set 10 20 30 40 100 200
-    let first: maybe i64 =
+    let first: maybe.t i64 =
       seq6.find_first (\k -> if k > 25
                              then #some (i64.i32 k)
                              else #none) elems
