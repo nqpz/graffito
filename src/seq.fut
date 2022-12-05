@@ -242,8 +242,9 @@ local module extend_core (seq_core: seq_core): seq with f '^base '^a = seq_core.
   def replicate x = map (const x) range
 
   def assoc_find check auxs elems =
-    (zip auxs elems
-     |> find_first' ((.0) >-> check)).1
+    zip auxs elems
+    |> find_first' ((.0) >-> check)
+    |> (.1)
 
   def random elems rng =
     let (rng, i) = dist_i32.rand (0, length - 1) rng
@@ -259,8 +260,9 @@ local module extend_core (seq_core: seq_core): seq with f '^base '^a = seq_core.
     def replicate x = map (const x) range
 
     def assoc_find check auxs elems =
-      (zip auxs elems
-       |> find_first' ((.0) >-> check)).1
+      zip auxs elems
+      |> find_first' ((.0) >-> check)
+      |> (.1)
 
     def random elems rng =
       let (rng, i) = dist_i32.rand (0, length - 1) rng
