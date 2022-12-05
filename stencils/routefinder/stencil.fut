@@ -22,6 +22,10 @@ module routefinder = mk_stencil {
     def all: seq.elems t =
       seq.set #north #west #east #south
 
+    def random (rng: rng): (t, rng) =
+      -- seq.random all rng -- FIXME: Will work once the stencil_kinds seqs are fixed
+      seq.get all seq4.set |> flip seq4.random rng
+
     def color (direction: t): argb.colour =
       match direction
       case #north -> argb.blue
@@ -42,6 +46,9 @@ module routefinder = mk_stencil {
     def all: seq.elems t =
       seq.set #kitchen #bathroom #recroom #bedroom #library
 
+    def random (rng: rng): (t, rng) =
+      seq.random all rng
+
     def color (building: t): argb.colour =
       match building
       case #kitchen -> argb.green
@@ -49,9 +56,6 @@ module routefinder = mk_stencil {
       case #recroom -> argb.magenta
       case #bedroom -> argb.yellow
       case #library -> argb.orange
-
-    def random (rng: rng): (t, rng) =
-      seq.random all rng
   }
 
   local module Building_directions = {
@@ -95,15 +99,19 @@ module routefinder = mk_stencil {
                            neighbor.building_directions).cost)
 
     def update (neighbors: seq.elems (maybe.t cell)) (cell: cell): cell =
-      let update_building building =
-        let (shortest_direction, subcost) =
+      let update_building (building, building_direction) =
+        let (dir, subcost) =
           neighbors
           |> seq.map (maybe.map (direction_cost building))
           |> seq.map (maybe.or (\() -> f32.inf))
           |> seq.zip Direction.all
           |> seq.foldr (\(d0, c0) (d1, c1) -> if c0 < c1 then (d0, c0) else (d1, c1))
-        in {cost=subcost + cell.ground.movement_cost, shortest_direction}
-      in cell with building_directions = Building.seq.map update_building Building.all
+        let dir' = if subcost == building_direction.cost
+                   then building_direction.shortest_direction
+                   else dir
+        in {cost=subcost + cell.ground.movement_cost, shortest_direction=dir'}
+      in cell with building_directions = Building.seq.zip Building.all cell.building_directions
+                                         |> Building.seq.map update_building
   }
 
   def new_cell cell neighbors =
@@ -113,11 +121,9 @@ module routefinder = mk_stencil {
 
   def render_cell (cell: cell) =
     let target = #kitchen -- Just this one for now
-    let {cost, shortest_direction} =
-      Building.seq.assoc_find (== target) Building.all cell.building_directions
-    in if f32.isinf cost
-       then argb.black
-       else Direction.color shortest_direction
+    in Building.seq.assoc_find (== target) Building.all cell.building_directions
+       |> (.shortest_direction)
+       |> Direction.color
 
   open create_random_cells {
     type cell = cell
@@ -146,8 +152,15 @@ module routefinder = mk_stencil {
              in (rng, #some {target, priority})
         else (rng, #none)
 
+      let (dirs, dir_rngs) =
+        rnge.split_rng (i64.i32 Building.seq.length) rng
+        |> map Direction.random
+        |> unzip
+      let dirs' = Building.seq.from_list dirs
+      let rng = rnge.join_rng dir_rngs
+
       let building_directions: Building_directions.t =
-        Building.seq.replicate {cost=f32.inf, shortest_direction=#south}
+        Building.seq.map (\dir -> {cost=f32.inf, shortest_direction=dir}) dirs'
 
       let cell = {ground, building, person, building_directions, rng}
       in (rng, cell)

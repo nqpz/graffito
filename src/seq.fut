@@ -67,6 +67,7 @@ module type seq = {
     val replicate 't: t -> elems t
     val assoc_find 't 'u: (t -> bool) -> elems t -> elems u -> u
     val random 't: elems t -> rng -> (t, rng)
+    val from_list 't [n]: [n]t -> elems t
   }
 
   include seq_core_f
@@ -74,6 +75,7 @@ module type seq = {
   val replicate '^t: t -> elems t
   val assoc_find '^t '^u: (t -> bool) -> elems t -> elems u -> u
   val random '^t: elems t -> rng -> (t, rng)
+  val from_list 't [n]: [n]t -> elems t
 }
 
 -- Used while doing the incremental building of the internal modules.
@@ -248,6 +250,9 @@ local module extend_core (seq_core: seq_core): seq with f '^base '^a = seq_core.
     let x = assoc_find (== i) range elems
     in (x, rng)
 
+  def from_list xs =
+    map (\i -> xs[i]) range
+
   module nf = {
     open seq_core.nf
 
@@ -261,6 +266,9 @@ local module extend_core (seq_core: seq_core): seq with f '^base '^a = seq_core.
       let (rng, i) = dist_i32.rand (0, length - 1) rng
       let x = assoc_find (== i) range elems
       in (x, rng)
+
+    def from_list xs =
+      map (\i -> xs[i]) range
   }
 }
 

@@ -22,6 +22,7 @@ module seq4' = {
   def replicate x = (x, x, x, x)
   def assoc_find _ _ (a, _b, _c, _d) = a
   def random (a, _b, _c, _d) rng = (a, rng)
+  def from_list xs = map (\i -> xs[i]) range
 
   module nf = {
     type elems 'base = (base, base, base, base)
@@ -39,6 +40,7 @@ module seq4' = {
     def replicate x = (x, x, x, x)
     def assoc_find _ _ (a, _b, _c, _d) = a
     def random (a, _b, _c, _d) rng = (a, rng)
+    def from_list xs = map (\i -> xs[i]) range
   }
 }
 
@@ -58,6 +60,7 @@ module seq8' = {
   def replicate x = (x, x, x, x, x, x, x, x)
   def assoc_find _ _ (a, _b, _c, _d, _e, _f, _g, _h) = a
   def random (a, _b, _c, _d, _e, _f, _g, _h) rng = (a, rng)
+  def from_list xs = map (\i -> xs[i]) range
 
   module nf = {
     type elems 'base = (base, base, base, base, base, base, base, base)
@@ -75,6 +78,7 @@ module seq8' = {
     def replicate x = (x, x, x, x, x, x, x, x)
     def assoc_find _ _ (a, _b, _c, _d, _e, _f, _g, _h) = a
     def random (a, _b, _c, _d, _e, _f, _g, _h) rng = (a, rng)
+    def from_list xs = map (\i -> xs[i]) range
   }
 }
 
