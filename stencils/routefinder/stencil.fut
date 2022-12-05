@@ -21,6 +21,13 @@ module routefinder = mk_stencil {
 
     def all: seq.elems t =
       seq.set #north #west #east #south
+
+    def color (direction: t): argb.colour =
+      match direction
+      case #north -> argb.blue
+      case #west -> argb.yellow
+      case #east -> argb.violet
+      case #south -> argb.red
   }
 
   local module Building = {
@@ -110,11 +117,7 @@ module routefinder = mk_stencil {
       Building.seq.assoc_find (== target) Building.all cell.building_directions
     in if f32.isinf cost
        then argb.black
-       else match shortest_direction
-            case #north -> argb.blue
-            case #west -> argb.yellow
-            case #east -> argb.violet
-            case #south -> argb.red
+       else Direction.color shortest_direction
 
   open create_random_cells {
     type cell = cell
