@@ -8,35 +8,52 @@ import "../../src/stencil_kinds"
 import "../../src/utils"
 import "../../src/seq"
 
+module type seq_t_input = {
+  module seq: seq
+
+  type t
+
+  val compare: t -> t -> bool
+
+  val all: seq.elems t
+
+  val colors: seq.elems argb.colour
+}
+
+module mk_seq_t (input: seq_t_input) = {
+  open input
+
+  def random (rng: rng): (t, rng) =
+    seq.random all rng
+
+  def color (direction: t): argb.colour =
+    seq.assoc_find (compare direction) all colors
+}
+
 module routefinder = mk_stencil {
   open stencil_kinds.cross
 
   type ground = {movement_cost: f32}
 
-  module Direction = {
+  module Direction = mk_seq_t {
+    module seq = seq
+
     type t = #north
            | #west
            | #east
            | #south
+
+    def compare: t -> t -> bool = (==)
 
     def all: seq.elems t =
       seq.set #north #west #east #south
 
     def colors: seq.elems argb.colour =
       seq.set argb.blue argb.yellow argb.violet argb.red
-
-    def random (rng: rng): (t, rng) =
-      seq.random all rng
-
-    def color (direction: t): argb.colour =
-      seq.assoc_find (== direction) all colors
   }
 
-  local module Building = {
+  local module Building = mk_seq_t {
     module seq = seq5
-
-    def from_nf = flip seq5.nf.get seq5.set
-    def to_nf = flip seq5.get seq5.nf.set
 
     type t = #kitchen
            | #bathroom
@@ -44,27 +61,13 @@ module routefinder = mk_stencil {
            | #bedroom
            | #library
 
+    def compare: t -> t -> bool = (==)
+
     def all: seq.elems t =
       seq.set #kitchen #bathroom #recroom #bedroom #library
 
-    def random (rng: rng): (t, rng) =
-      seq.random all rng
-
     def colors: seq.elems argb.colour =
       seq.set argb.green argb.brown argb.magenta argb.yellow argb.orange
-
-    def color (direction: t): argb.colour =
-      seq.assoc_find (== direction) all colors
-
-    module get = {
-      local def on_tuple = (flip seq.get (\a b c d e -> (a, b, c, d, e)) >->)
-
-      def kitchen = on_tuple (.0)
-      def bathroom = on_tuple (.1)
-      def recroom = on_tuple (.2)
-      def bedroom = on_tuple (.3)
-      def library = on_tuple (.4)
-    }
   }
 
   local module Building_directions = {
@@ -83,6 +86,19 @@ module routefinder = mk_stencil {
 
   module Building = {
     open Building
+
+    def from_nf = flip seq.nf.get seq.set
+    def to_nf = flip seq.get seq.nf.set
+
+    module get = {
+      local def on_tuple = (flip seq.get (\a b c d e -> (a, b, c, d, e)) >->)
+
+      def kitchen = on_tuple (.0)
+      def bathroom = on_tuple (.1)
+      def recroom = on_tuple (.2)
+      def bedroom = on_tuple (.3)
+      def library = on_tuple (.4)
+    }
 
     def update (cell: cell): cell =
       let (rng, det) = dist.rand (0, 1) cell.rng
