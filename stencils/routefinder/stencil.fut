@@ -23,8 +23,7 @@ module routefinder = mk_stencil {
       seq.set #north #west #east #south
 
     def random (rng: rng): (t, rng) =
-      -- seq.random all rng -- FIXME: Will work once the stencil_kinds seqs are fixed
-      seq.get all seq4.set |> flip seq4.random rng
+      seq.random all rng
 
     def color (direction: t): argb.colour =
       match direction
