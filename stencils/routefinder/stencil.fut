@@ -71,7 +71,7 @@ module routefinder = mk_stencil {
   }
 
   local module Building_directions = {
-    type base = {cost: f32, shortest_direction: Direction.t}
+    type base = {minimum_cost: f32, signal_age: i32, shortest_direction: Direction.t, void_signal_age: i32}
     type^ t = Building.seq.elems base
     type t' = Building.seq.nf.elems base
   }
@@ -102,15 +102,30 @@ module routefinder = mk_stencil {
 
     def update (cell: cell): cell =
       let (rng, det) = dist.rand (0, 1) cell.rng
-      let (rng, building) =
-        if det < 0.001
-        then match cell.building
-             case #some _ -> (rng, #none)
-             case #none -> (rng, #none)-- let (b, rng) = random rng
-                           -- in (rng, #some b)
-        else (rng, cell.building)
+      let (rng, building, building_removed): (rng, maybe.t Building.t, maybe.t Building.t) =
+        match cell.building
+        case #some b ->
+          if det < 0.1
+          then (rng, #none, #some b)
+          else (rng, #some b, #none)
+        case #none ->
+          if det < 0.00000001
+          then let (b, rng) = random rng
+               in (rng, #some b, #none)
+          else (rng, #none, #none)
+      let building_directions =
+        match building_removed
+        case #none -> cell.building_directions
+        case #some removed ->
+          cell.building_directions
+          |> from_nf
+          |> seq.zip all
+          |> seq.map (\((b, d): (t, Building_directions.base)) ->
+                        if b == removed then d else d)
+          |> to_nf
       in cell with rng = rng
               with building = building
+              with building_directions = building_directions
   }
 
   module Building_directions = {
@@ -119,23 +134,44 @@ module routefinder = mk_stencil {
     local def direction_cost (accessor: Building_directions.t -> Building_directions.base)
                              (target: Building.t)
                              (neighbor: cell)
-                             : f32 =
+                             : (f32, i32, i32) =
       neighbor.building
-      |> maybe.bind (\building -> if building == target then #some 0 else #none)
-      |> maybe.or (\() -> (accessor (Building.from_nf neighbor.building_directions)).cost)
+      |> maybe.bind (\building -> if building == target then #some (0, 0, 0) else #none)
+      |> maybe.or (\() ->
+                     let base = accessor (Building.from_nf neighbor.building_directions)
+                     in (base.minimum_cost, base.signal_age, base.void_signal_age))
+
+    local def void_direction_cost (accessor: Building_directions.t -> Building_directions.base)
+                                  (neighbor: cell)
+                                  : i32 =
+      let base = accessor (Building.from_nf neighbor.building_directions)
+      in base.void_signal_age
 
     def update (neighbors: seq.elems (maybe.t cell)) (cell: cell): cell =
       let update_building (accessor, (building, building_direction)) =
-        let (dir, subcost) =
+        let (dir, (subcost, subage, _)) =
           neighbors
           |> seq.map (maybe.map (direction_cost accessor building))
-          |> seq.map (maybe.or (\() -> f32.inf))
+          |> seq.map (maybe.or (\() -> (f32.inf, 0, 0)))
           |> seq.zip Direction.all
-          |> seq.foldr (\(d0, c0) (d1, c1) -> if c0 < c1 then (d0, c0) else (d1, c1))
-        let dir' = if subcost == building_direction.cost
+          |> seq.foldr (\(d0, (c0, a0, va0)) (d1, (c1, a1, va1)) ->
+                          if c0 < c1 && a0 <= va0
+                          then (d0, (c0, a0, va0))
+                          else (d1, (c1, a1, va1)))
+        let dir' = if subcost == building_direction.minimum_cost
                    then building_direction.shortest_direction
                    else dir
-        in {cost=subcost + cell.ground.movement_cost, shortest_direction=dir'}
+
+        let void_subage =
+          neighbors
+          |> seq.map (maybe.map (void_direction_cost accessor))
+          |> seq.map (maybe.or (\() -> 0i32))
+          |> seq.foldr i32.max
+
+        in {minimum_cost=subcost + cell.ground.movement_cost,
+            signal_age=subage + 1,
+            shortest_direction=dir',
+            void_signal_age=void_subage + 1}
       in cell with building_directions = Building.from_nf cell.building_directions
                                          |> Building.seq.zip Building.all
                                          |> Building.seq.zip Building.seq.accessors
@@ -145,7 +181,7 @@ module routefinder = mk_stencil {
 
   def new_cell cell neighbors =
     cell
-    |> id -- Building.update
+    |> Building.update
     |> Building_directions.update neighbors
 
   def render_cell (cell: cell) =
@@ -190,7 +226,8 @@ module routefinder = mk_stencil {
       let rng = rnge.join_rng dir_rngs
 
       let building_directions =
-        Building.seq.map (\dir -> {cost=f32.inf, shortest_direction=dir}) dirs'
+        Building.seq.map (\dir -> {minimum_cost=f32.inf, signal_age=0i32,
+                                   shortest_direction=dir, void_signal_age=0i32}) dirs'
         |> Building.to_nf
 
       let cell = {ground, building, person, building_directions, rng}
