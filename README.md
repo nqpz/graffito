@@ -16,11 +16,11 @@ Then run `make` to build all programs.
 
 The programs go in the `bin` directory:
 
-- `bin/gameoflife`: A very basic, no-frills implementation of Game of Life.
+- `bin/routefinder`: Visualize route finding.
 - `bin/gameoflifeprob`: A probabilistic Game of Life.
+- `bin/gameoflife`: A very basic, no-frills implementation of Game of Life.
 - `bin/closingframe`: A growing black frame around a square of colors.
 - `bin/diamonds`: Growing diamonds.
-- `bin/routefinder`: Visualize route finding.
 
 Pass `--help` to any program to see which options can be changed.
 
