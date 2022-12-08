@@ -26,8 +26,8 @@ module mk_seq_t (input: seq_t_input) = {
   def random (rng: rng): (t, rng) =
     seq.random all rng
 
-  def color (direction: t): argb.colour =
-    seq.assoc_find (compare direction) all colors
+  def color (x: t): argb.colour =
+    seq.assoc_find (compare x) all colors
 }
 
 module routefinder = mk_stencil {
