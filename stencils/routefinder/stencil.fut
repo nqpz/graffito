@@ -22,15 +22,14 @@ module routefinder = mk_stencil {
     def all: seq.elems t =
       seq.set #north #west #east #south
 
+    def colors: seq.elems argb.colour =
+      seq.set argb.blue argb.yellow argb.violet argb.red
+
     def random (rng: rng): (t, rng) =
       seq.random all rng
 
     def color (direction: t): argb.colour =
-      match direction
-      case #north -> argb.blue
-      case #west -> argb.yellow
-      case #east -> argb.violet
-      case #south -> argb.red
+      seq.assoc_find (== direction) all colors
   }
 
   local module Building = {
@@ -51,13 +50,11 @@ module routefinder = mk_stencil {
     def random (rng: rng): (t, rng) =
       seq.random all rng
 
-    def color (building: t): argb.colour =
-      match building
-      case #kitchen -> argb.green
-      case #bathroom -> argb.brown
-      case #recroom -> argb.magenta
-      case #bedroom -> argb.yellow
-      case #library -> argb.orange
+    def colors: seq.elems argb.colour =
+      seq.set argb.green argb.brown argb.magenta argb.yellow argb.orange
+
+    def color (direction: t): argb.colour =
+      seq.assoc_find (== direction) all colors
 
     module get = {
       local def on_tuple = (flip seq.get (\a b c d e -> (a, b, c, d, e)) >->)
