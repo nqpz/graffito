@@ -49,7 +49,15 @@ module routefinder = mk_stencil {
     def all: seq.elems t =
       seq.set #kitchen #bathroom #recroom #bedroom #library
 
-    def get_accessor t = seq.assoc_find (== t) all seq.accessors
+    module get = {
+      local def on_tuple = (flip seq.get (\a b c d e -> (a, b, c, d, e)) >->)
+
+      def kitchen = on_tuple (.0)
+      def bathroom = on_tuple (.1)
+      def recroom = on_tuple (.2)
+      def bedroom = on_tuple (.3)
+      def library = on_tuple (.4)
+    }
 
     def random (rng: rng): (t, rng) =
       seq.random all rng
@@ -128,12 +136,10 @@ module routefinder = mk_stencil {
     |> id -- Building.update
     |> Building_directions.update neighbors
 
-  local def get_kitchen = Building.get_accessor #kitchen
-
   def render_cell (cell: cell) =
     cell.building_directions
     |> Building.from_nf
-    |> get_kitchen -- Just render the kitchens for now
+    |> Building.get.kitchen -- Just render the kitchens for now
     |> (.shortest_direction)
     |> Direction.color
 
