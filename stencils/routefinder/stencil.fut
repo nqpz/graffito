@@ -103,11 +103,11 @@ module routefinder = mk_stencil {
     def update (cell: cell): cell =
       let (rng, det) = dist.rand (0, 1) cell.rng
       let (rng, building) =
-        if det < 0.0001
+        if det < 0.001
         then match cell.building
              case #some _ -> (rng, #none)
-             case #none -> let (b, rng) = random rng
-                           in (rng, #some b)
+             case #none -> (rng, #none)-- let (b, rng) = random rng
+                           -- in (rng, #some b)
         else (rng, cell.building)
       in cell with rng = rng
               with building = building
