@@ -62,5 +62,5 @@ module mk_stencil (stencil_input: stencil_input):
     map2 (map2 (step_cell cells)) cells (tabulate_2d h w (\y x -> (y, x)))
 
   def render [h][w]: [h][w]cell -> [h][w]argb.colour =
-    map (map stencil_input.render_cell)
+    map (map render_cell)
 }
