@@ -1,5 +1,5 @@
 pkgs: with pkgs; [
-  pkgconfig
+  pkg-config
   ocl-icd
   opencl-headers
   SDL2
@@ -7,4 +7,5 @@ pkgs: with pkgs; [
   xxd
   python3
   gcc
+  ncurses.dev
 ]
