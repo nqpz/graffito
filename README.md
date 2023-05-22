@@ -21,6 +21,7 @@ The programs go in the `bin` directory:
 - `bin/gameoflife`: A very basic, no-frills implementation of Game of Life.
 - `bin/closingframe`: A growing black frame around a square of colors.
 - `bin/diamonds`: Growing diamonds.
+- `bin/consistencyfier`: Not sure yet.
 
 Pass `--help` to any program to see which options can be changed.
 
