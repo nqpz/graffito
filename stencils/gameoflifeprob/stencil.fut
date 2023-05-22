@@ -65,10 +65,10 @@ module gameoflifeprob = mk_stencil {
   def create_cells (h: i64) (w: i64) (rng: rng): ([h][w]cell, rng) =
     let rngs = rnge.split_rng (h * w) rng
     let coordinates = tabulate_2d h w (\y _x -> y)
-                      |> flatten_to (h * w)
+                      |> flatten
     let (rngs, cells) = map2 (create_gradient_cell h) rngs coordinates
                         |> unzip
-    in (unflatten h w cells, rnge.join_rng rngs)
+    in (unflatten cells, rnge.join_rng rngs)
 
   -- open create_random_cells {
   --   type cell = cell

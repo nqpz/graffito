@@ -15,7 +15,7 @@ module create_random_cells (create_cell: {
     let (rngs, cells) = rnge.split_rng (h * w) rng
                         |> map create_cell.random_cell
                         |> unzip
-    in (unflatten h w cells, rnge.join_rng rngs)
+    in (unflatten cells, rnge.join_rng rngs)
 }
 
 module random_color_rgb = {
