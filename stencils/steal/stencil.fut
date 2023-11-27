@@ -38,7 +38,7 @@ module steal = mk_stencil {
                  with x = cell.x - i32.sgn cell.x
 
   def render_cell (cell: cell) =
-    argb.from_rgba (r32 cell.x / 100) (r32 cell.y / 100) 0 1
+    argb.from_rgba (r32 cell.x / 100) (r32 cell.y / 100) (r32 (i32.abs (cell.y - cell.x)) / 100) 1
 
   open create_random_cells {
     type cell = cell
