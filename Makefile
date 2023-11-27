@@ -1,5 +1,5 @@
 # Extend this list when you create new stencils.
-STENCILS=gameoflife gameoflifeprob closingframe diamonds routefinder consistencyfier
+STENCILS=gameoflife gameoflifeprob closingframe diamonds routefinder consistencyfier steal
 
 
 .PHONY: all clean
