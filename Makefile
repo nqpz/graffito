@@ -14,7 +14,7 @@ _make/%:
 	$(MAKE) -C stencils$(shell echo $@ | sed 's/^_make//')
 
 bin:
-	mkdir bin
+	mkdir -p bin
 
 bin/%:
 	ln -s ../stencils$(shell echo $@ | sed 's/^bin//')/stencil $@
