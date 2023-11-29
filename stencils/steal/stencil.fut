@@ -17,6 +17,9 @@ module steal = mk_stencil {
                center_hue: f32,
                hue: f32}
 
+  def dist_from_center (cell: cell): f32 =
+    f32.sqrt (r32 (cell.y**2 + cell.x**2))
+
   def new_cell (cell: cell) neighbors: cell =
     let extract (mx: maybe.t cell): cell =
       match mx
@@ -35,7 +38,7 @@ module steal = mk_stencil {
               (seq.map extract_offset neighbor_offsets)
       |> seq.foldr merge
     in if cell_largest.weight > cell.weight
-       then cell_largest with weight = cell.weight + 0.01
+       then cell_largest with weight = cell.weight + 0.01 / (1 + f32.log (dist_from_center cell) / 50)
                          with y = cell_largest.y + i32.i64 off_largest.y
                          with x = cell_largest.x + i32.i64 off_largest.x
                          with hue = 0.01 * cell_largest.center_hue
@@ -44,11 +47,10 @@ module steal = mk_stencil {
        else cell
 
   def render_cell (cell: cell) =
-    let dist_from_center = f32.sqrt (r32 (cell.y**2 + cell.x**2))
-    in {L=0.4, C=f32.min 1 (dist_from_center / 200), h=cell.hue}
-       |> from_LCh
-       |> oklab_to_linear_srgb
-       |> \c -> argb.from_rgba c.r c.g c.b 1
+    {L=0.4, C=f32.min 1 (dist_from_center cell / 200), h=cell.hue}
+    |> from_LCh
+    |> oklab_to_linear_srgb
+    |> \c -> argb.from_rgba c.r c.g c.b 1
 
   open create_random_cells {
     type cell = cell
