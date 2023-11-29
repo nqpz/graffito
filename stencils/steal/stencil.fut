@@ -31,13 +31,16 @@ module steal = mk_stencil {
       else (cell2, off2)
 
     let (cell_largest, off_largest) =
-      seq.zip (seq.map extract neighbors) (seq.map extract_offset neighbor_offsets)
+      seq.zip (seq.map extract neighbors)
+              (seq.map extract_offset neighbor_offsets)
       |> seq.foldr merge
     in if cell_largest.weight > cell.weight
        then cell_largest with weight = cell.weight + 0.01
                          with y = cell_largest.y + i32.i64 off_largest.y
                          with x = cell_largest.x + i32.i64 off_largest.x
-                         with hue = cell_largest.center_hue * 0.01 + (cell_largest.hue * 0.25 + cell.hue * 0.75) * 0.99
+                         with hue = 0.01 * cell_largest.center_hue
+                                    + 0.99 * (0.25 * cell_largest.hue
+                                              + 0.75 * cell.hue)
        else cell
 
   def render_cell (cell: cell) =
