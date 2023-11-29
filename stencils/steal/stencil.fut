@@ -33,9 +33,10 @@ module steal = mk_stencil {
       seq.zip (seq.map extract neighbors) (seq.map extract_offset neighbor_offsets)
       |> seq.foldr merge
     in if cell_largest.weight > cell.weight
-       then cell_largest with weight = cell.weight + 0.01
-                         with y = cell_largest.y + i32.i64 off_largest.y
-                         with x = cell_largest.x + i32.i64 off_largest.x
+       then {weight = cell.weight + 0.01,
+             y = cell_largest.y + i32.i64 off_largest.y,
+             x = cell_largest.x + i32.i64 off_largest.x,
+             hue = cell_largest.hue * 0.25 + cell.hue * 0.75}
        else cell with y = cell.y - i32.sgn cell.y
                  with x = cell.x - i32.sgn cell.x
 
