@@ -37,8 +37,7 @@ module steal = mk_stencil {
              y = cell_largest.y + i32.i64 off_largest.y,
              x = cell_largest.x + i32.i64 off_largest.x,
              hue = cell_largest.hue * 0.25 + cell.hue * 0.75}
-       else cell with y = cell.y - i32.sgn cell.y
-                 with x = cell.x - i32.sgn cell.x
+       else cell
 
   def render_cell (cell: cell) =
     let dist_from_center = f32.sqrt (r32 (cell.y**2 + cell.x**2))
