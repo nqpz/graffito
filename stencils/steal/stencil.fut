@@ -6,19 +6,21 @@ import "../../src/random"
 import "../../src/stencil"
 import "../../src/stencil_kinds"
 import "../../src/utils"
+import "../../src/oklab"
 
 module steal = mk_stencil {
   open stencil_kinds.square
 
   type cell = {weight: f32,
                y: i32,
-               x: i32}
+               x: i32,
+               hue: f32}
 
   def new_cell (cell: cell) neighbors: cell =
     let extract (mx: maybe.t cell): cell =
       match mx
       case #some c -> c
-      case #none -> {weight= -1, y=0, x=0}
+      case #none -> {weight= -1, y=0, x=0, hue=0}
 
     let extract_offset (y, x, _) = {y, x}
 
@@ -31,21 +33,26 @@ module steal = mk_stencil {
       seq.zip (seq.map extract neighbors) (seq.map extract_offset neighbor_offsets)
       |> seq.foldr merge
     in if cell_largest.weight > cell.weight
-       then {weight=cell.weight + 0.01,
-             y=cell_largest.y + i32.i64 off_largest.y,
-             x=cell_largest.x + i32.i64 off_largest.x}
+       then cell_largest with weight = cell.weight + 0.01
+                         with y = cell_largest.y + i32.i64 off_largest.y
+                         with x = cell_largest.x + i32.i64 off_largest.x
        else cell with y = cell.y - i32.sgn cell.y
                  with x = cell.x - i32.sgn cell.x
 
   def render_cell (cell: cell) =
-    argb.from_rgba (r32 cell.x / 100) (r32 cell.y / 100) (f32.sqrt (r32 (cell.y**2 + cell.x**2)) / 300) 1
+    let dist_from_center = f32.sqrt (r32 (cell.y**2 + cell.x**2))
+    in {L=0.3, C=f32.min 1 (dist_from_center / 200), h=cell.hue}
+       |> from_LCh
+       |> oklab_to_linear_srgb
+       |> \c -> argb.from_rgba c.r c.g c.b 1
 
   open create_random_cells {
     type cell = cell
 
     def random_cell rng: (rng, cell) =
       let (rng, weight) = dist.rand (0, 1) rng
-      in (rng, {weight, y=0, x=0})
+      let (rng, hue) = dist.rand (0, 100) rng
+      in (rng, {weight, y=0, x=0, hue})
   }
 }
 
