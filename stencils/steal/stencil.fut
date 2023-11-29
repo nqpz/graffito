@@ -14,13 +14,14 @@ module steal = mk_stencil {
   type cell = {weight: f32,
                y: i32,
                x: i32,
+               center_hue: f32,
                hue: f32}
 
   def new_cell (cell: cell) neighbors: cell =
     let extract (mx: maybe.t cell): cell =
       match mx
       case #some c -> c
-      case #none -> {weight= -1, y=0, x=0, hue=0}
+      case #none -> {weight= -1, y=0, x=0, center_hue=0, hue=0}
 
     let extract_offset (y, x, _) = {y, x}
 
@@ -33,10 +34,10 @@ module steal = mk_stencil {
       seq.zip (seq.map extract neighbors) (seq.map extract_offset neighbor_offsets)
       |> seq.foldr merge
     in if cell_largest.weight > cell.weight
-       then {weight = cell.weight + 0.01,
-             y = cell_largest.y + i32.i64 off_largest.y,
-             x = cell_largest.x + i32.i64 off_largest.x,
-             hue = cell_largest.hue * 0.25 + cell.hue * 0.75}
+       then cell_largest with weight = cell.weight + 0.01
+                         with y = cell_largest.y + i32.i64 off_largest.y
+                         with x = cell_largest.x + i32.i64 off_largest.x
+                         with hue = cell_largest.center_hue * 0.01 + (cell_largest.hue * 0.25 + cell.hue * 0.75) * 0.99
        else cell
 
   def render_cell (cell: cell) =
@@ -52,7 +53,7 @@ module steal = mk_stencil {
     def random_cell rng: (rng, cell) =
       let (rng, weight) = dist.rand (0, 1) rng
       let (rng, hue) = dist.rand (0, 100) rng
-      in (rng, {weight, y=0, x=0, hue})
+      in (rng, {weight, y=0, x=0, center_hue=hue, hue})
   }
 }
 
