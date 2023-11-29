@@ -42,7 +42,7 @@ module steal = mk_stencil {
 
   def render_cell (cell: cell) =
     let dist_from_center = f32.sqrt (r32 (cell.y**2 + cell.x**2))
-    in {L=0.3, C=f32.min 1 (dist_from_center / 200), h=cell.hue}
+    in {L=0.4, C=f32.min 1 (dist_from_center / 200), h=cell.hue}
        |> from_LCh
        |> oklab_to_linear_srgb
        |> \c -> argb.from_rgba c.r c.g c.b 1
