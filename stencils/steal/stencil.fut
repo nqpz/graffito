@@ -11,22 +11,57 @@ import "../../src/oklab"
 module steal = mk_stencil {
   open stencil_kinds.square
 
-  type cell = {weight: f32,
-               y: i32,
-               x: i32,
-               center_hue: f32,
-               hue: f32}
+  module point = {
+    type t = {y: i32, x: i32}
 
-  def dist_from_center (cell: cell): f32 =
-    f32.sqrt (r32 (cell.y**2 + cell.x**2))
+    def zero: t = {y=0, x=0}
+
+    def length ({y, x}: t): f32 =
+      f32.sqrt (r32 (y**2 + x**2))
+
+    def map2 (f: i32 -> i32 -> i32) (p0: t) (p1: t): t =
+      {y=f p0.y p1.y, x=f p0.x p1.x}
+  }
+  type point = point.t
+
+  type bounds = {upper_left: point,
+                 lower_right: point}
+
+  def bounds_size ({upper_left, lower_right}: bounds): f32 =
+    point.map2 (-) lower_right upper_left
+    |> point.length
+    |> (+ 1)
+
+  def merge_bounds (bounds0: bounds) (bounds1: bounds): bounds =
+    {upper_left=point.map2 i32.min bounds0.upper_left bounds1.upper_left,
+     lower_right=point.map2 i32.max bounds0.lower_right bounds1.lower_right}
+
+  type cell = {weight: f32,
+               point: point,
+               center_hue: f32,
+               hue: f32,
+               bounds: bounds,
+               bounds_size: f32}
+
+  def recalculate_bounds neighbors (cell: cell): cell =
+    let extract (mx: maybe.t cell) =
+      match mx
+      case #some c -> if c.center_hue == cell.center_hue
+                      then c.bounds
+                      else {upper_left=cell.point, lower_right=cell.point}
+      case #none -> {upper_left=cell.point, lower_right=cell.point}
+
+    let bounds = seq.map extract neighbors
+                 |> seq.foldr merge_bounds
+    in cell with bounds = bounds
 
   def new_cell (cell: cell) neighbors: cell =
     let extract (mx: maybe.t cell): cell =
       match mx
       case #some c -> c
-      case #none -> {weight= -1, y=0, x=0, center_hue=0, hue=0}
+      case #none -> {weight= -1, point=point.zero, center_hue=0, hue=0, bounds={upper_left=point.zero, lower_right=point.zero}, bounds_size=1}
 
-    let extract_offset (y, x, _) = {y, x}
+    let extract_offset (y, x, _) = {y=i32.i64 y, x=i32.i64 x}
 
     let merge (cell1, off1) (cell2, off2) =
       if cell1.weight > cell2.weight
@@ -37,17 +72,20 @@ module steal = mk_stencil {
       seq.zip (seq.map extract neighbors)
               (seq.map extract_offset neighbor_offsets)
       |> seq.foldr merge
-    in if cell_largest.weight > cell.weight
-       then cell_largest with weight = cell.weight + 0.01 / (1 + f32.log (dist_from_center cell) / 50)
-                         with y = cell_largest.y + i32.i64 off_largest.y
-                         with x = cell_largest.x + i32.i64 off_largest.x
-                         with hue = 0.01 * cell_largest.center_hue
-                                    + 0.99 * (0.25 * cell_largest.hue
-                                              + 0.75 * cell.hue)
-       else cell
+    in let cell = if cell_largest.weight > cell.weight
+                  then let p = point.map2 (+) cell_largest.point off_largest
+                       in (cell_largest with weight = cell.weight + 0.01 / (1 + f32.log (point.length cell.point) / 50)
+                                        with point = p
+                                        with hue = 0.01 * cell_largest.center_hue
+                                                   + 0.99 * (0.25 * cell_largest.hue
+                                                             + 0.75 * cell.hue))
+                          |> recalculate_bounds neighbors
+                          |> \(cell: cell) -> cell with bounds = merge_bounds cell.bounds {upper_left=p, lower_right=p}
+                  else recalculate_bounds neighbors cell
+       in cell with bounds_size = bounds_size cell.bounds
 
   def render_cell (cell: cell) =
-    {L=0.4, C=f32.min 1 (dist_from_center cell / 200), h=cell.hue}
+    {L=0.4, C=f32.min 1 (point.length cell.point / cell.bounds_size), h=cell.hue}
     |> from_LCh
     |> oklab_to_linear_srgb
     |> \c -> argb.from_rgba c.r c.g c.b 1
@@ -58,7 +96,9 @@ module steal = mk_stencil {
     def random_cell rng: (rng, cell) =
       let (rng, weight) = dist.rand (0, 1) rng
       let (rng, hue) = dist.rand (0, 100) rng
-      in (rng, {weight, y=0, x=0, center_hue=hue, hue})
+      in (rng, {weight, point=point.zero, center_hue=hue, hue,
+                bounds={upper_left=point.zero, lower_right=point.zero},
+                bounds_size=1})
   }
 }
 
