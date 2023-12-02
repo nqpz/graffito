@@ -43,7 +43,9 @@ module steal = mk_stencil {
                bounds: bounds,
                bounds_size: f32}
 
-  def recalculate_bounds neighbors (cell: cell): cell =
+  def recalculate_bounds (neighbors: seq.elems (maybe.t cell))
+                         (cell: cell)
+                         : cell =
     let extract (mx: maybe.t cell) =
       match mx
       case #some c -> if c.center_hue == cell.center_hue
@@ -55,11 +57,29 @@ module steal = mk_stencil {
                  |> seq.foldr merge_bounds
     in cell with bounds = bounds
 
-  def new_cell (cell: cell) neighbors: cell =
+  def replace_cell (cell: cell)
+                   (neighbors: seq.elems (maybe.t cell))
+                   (cell_largest: cell)
+                   (offset_largest: point)
+                   : cell =
+    let weight = cell.weight
+                 + 0.01 / (1 + f32.log (point.length cell.point) / 40)
+    let p = point.map2 (+) cell_largest.point offset_largest
+    let cell = (cell_largest with weight = weight
+                             with point = p
+                             with hue = 0.01 * cell_largest.center_hue
+                                        + 0.99 * (0.15 * cell_largest.hue
+                                                  + 0.85 * cell.hue))
+               |> recalculate_bounds neighbors
+    in cell with bounds = merge_bounds cell.bounds {upper_left=p, lower_right=p}
+
+  def new_cell (cell: cell)
+               (neighbors: seq.elems (maybe.t cell))
+               : cell =
     let extract (mx: maybe.t cell): cell =
       match mx
       case #some c -> c
-      case #none -> {weight= -1, point=point.zero, center_hue=0, hue=0, bounds={upper_left=point.zero, lower_right=point.zero}, bounds_size=1}
+      case #none -> cell with weight = -1
 
     let extract_offset (y, x, _) = {y=i32.i64 y, x=i32.i64 x}
 
@@ -68,19 +88,12 @@ module steal = mk_stencil {
       then (cell1, off1)
       else (cell2, off2)
 
-    let (cell_largest, off_largest) =
+    let (cell_largest, offset_largest) =
       seq.zip (seq.map extract neighbors)
               (seq.map extract_offset neighbor_offsets)
       |> seq.foldr merge
     in let cell = if cell_largest.weight > cell.weight
-                  then let p = point.map2 (+) cell_largest.point off_largest
-                       in (cell_largest with weight = cell.weight + 0.01 / (1 + f32.log (point.length cell.point) / 40)
-                                        with point = p
-                                        with hue = 0.01 * cell_largest.center_hue
-                                                   + 0.99 * (0.15 * cell_largest.hue
-                                                             + 0.85 * cell.hue))
-                          |> recalculate_bounds neighbors
-                          |> \(cell: cell) -> cell with bounds = merge_bounds cell.bounds {upper_left=p, lower_right=p}
+                  then replace_cell cell neighbors cell_largest offset_largest
                   else recalculate_bounds neighbors cell
        in cell with bounds_size = bounds_size cell.bounds
 
