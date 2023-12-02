@@ -77,8 +77,8 @@ module steal = mk_stencil {
                        in (cell_largest with weight = cell.weight + 0.01 / (1 + f32.log (point.length cell.point) / 50)
                                         with point = p
                                         with hue = 0.01 * cell_largest.center_hue
-                                                   + 0.99 * (0.25 * cell_largest.hue
-                                                             + 0.75 * cell.hue))
+                                                   + 0.99 * (0.15 * cell_largest.hue
+                                                             + 0.85 * cell.hue))
                           |> recalculate_bounds neighbors
                           |> \(cell: cell) -> cell with bounds = merge_bounds cell.bounds {upper_left=p, lower_right=p}
                   else recalculate_bounds neighbors cell
