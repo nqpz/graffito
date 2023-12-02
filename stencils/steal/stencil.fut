@@ -74,7 +74,7 @@ module steal = mk_stencil {
       |> seq.foldr merge
     in let cell = if cell_largest.weight > cell.weight
                   then let p = point.map2 (+) cell_largest.point off_largest
-                       in (cell_largest with weight = cell.weight + 0.01 / (1 + f32.log (point.length cell.point) / 50)
+                       in (cell_largest with weight = cell.weight + 0.01 / (1 + f32.log (point.length cell.point) / 40)
                                         with point = p
                                         with hue = 0.01 * cell_largest.center_hue
                                                    + 0.99 * (0.15 * cell_largest.hue
