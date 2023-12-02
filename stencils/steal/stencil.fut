@@ -85,7 +85,9 @@ module steal = mk_stencil {
        in cell with bounds_size = bounds_size cell.bounds
 
   def render_cell (cell: cell) =
-    {L=0.5, C=f32.min 1 (point.length cell.point / cell.bounds_size), h=cell.hue}
+    {L=0.25 + f32.min 0.25 (cell.bounds_size / 200),
+     C=f32.min 1 (point.length cell.point / cell.bounds_size),
+     h=cell.hue}
     |> from_LCh
     |> oklab_to_linear_srgb
     |> \c -> argb.from_rgba c.r c.g c.b 1
