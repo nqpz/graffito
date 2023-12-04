@@ -17,7 +17,7 @@ bin:
 	mkdir -p bin
 
 bin/%:
-	ln -s ../stencils$(shell echo $@ | sed 's/^bin//')/stencil $@
+	ln -sf ../stencils$(shell echo $@ | sed 's/^bin//')/stencil $@
 
 _clean/%:
 	$(MAKE) clean -C stencils$(shell echo $@ | sed 's/^_clean//')
