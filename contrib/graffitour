@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# Show 10 seconds of each program in a loop.
+
+set -ex
+
+programs=$(ls "$(dirname "$0")/../bin")
+duration=10
+
+while true; do
+    for x in $programs; do
+        bin/$x -R &
+        pid=$!
+        sleep $duration
+        kill $pid
+    done
+done
