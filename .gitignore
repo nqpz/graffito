@@ -2,3 +2,4 @@ bin/
 stencil
 stencil_*
 stencils/*/font_data.h
+*.lyscache
