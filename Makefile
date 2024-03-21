@@ -1,5 +1,5 @@
 # Extend this list when you create new stencils.
-STENCILS=template steal gameoflife gameoflifeprob closingframe diamonds routefinder consistencyfier lines
+STENCILS=template steal gameoflife gameoflifeprob closingframe diamonds routefinder consistencyfier lines producerconsumer
 
 
 .PHONY: all clean

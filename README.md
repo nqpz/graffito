@@ -25,6 +25,7 @@ The programs go in the `bin` directory:
 - `bin/diamonds`: Growing diamonds.
 - `bin/consistencyfier`: Not sure yet.
 - `bin/lines`: Scraggly lines.
+- `bin/producerconsumer`: Glittering small movements.
 
 Pass `--help` to any program to see which options can be changed.
 
