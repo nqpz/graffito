@@ -16,6 +16,7 @@ Then run `make` to build all programs.
 
 The programs go in the `bin` directory:
 
+- `bin/template`: A small template with comments in order to get started.
 - `bin/steal`: An area-stealing algorithm, kind of.
 - `bin/routefinder`: Visualize route finding.
 - `bin/gameoflifeprob`: A probabilistic Game of Life.
