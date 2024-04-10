@@ -77,7 +77,9 @@ module lys: lys with text_content = text_content = {
                      case #rain _ -> #producerconsumer (stencils.producerconsumer.lys.init s.seed s.h s.w)
 
   def resize (h: i64) (w: i64) (s: state): state =
-    s with stencil = match s.stencil
+    s with h = h
+      with w = w
+      with stencil = match s.stencil
                      case #template s' -> #template (stencils.template.lys.resize h w s')
                      case #steal s' -> #steal (stencils.steal.lys.resize h w s')
                      case #gameoflife s' -> #gameoflife (stencils.gameoflife.lys.resize h w s')
