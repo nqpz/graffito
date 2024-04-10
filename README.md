@@ -42,3 +42,9 @@ Controls in the visualizations:
 - Create a new directory under `stencils/` with a `stencil.fut` file and
   a Makefile.
 - Extend the root `Makefile`.
+
+
+## MEGAGRAFFITO
+
+See also the [MEGAGRAFFITO](./MEGAGRAFFITO) subdirectory for a single
+program containing all the stencils (not built by default).
