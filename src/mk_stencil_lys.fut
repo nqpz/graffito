@@ -18,8 +18,12 @@ module mk_stencil_lys (stencil: stencil with create_input = rng
     let (cells, rng) = stencil.create_cells h w rng
     in {h, w, rng, time=0, paused=false, cells}
 
-  def resize (_h: i64) (_w: i64) (s: state): state =
-    s -- FIXME
+  def resize (h: i64) (w: i64) (s: state): state =
+    let (cells, rng) = stencil.create_cells h w s.rng
+    in s with h = h
+         with w = w
+         with cells = cells
+         with rng = rng
 
   def step (s: state): state =
     s with cells = stencil.step (copy s.cells)
