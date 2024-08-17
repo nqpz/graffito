@@ -10,7 +10,7 @@ import "../../src/utils"
 module gravity = mk_stencil {
   open stencil_kinds.cross
 
-  type cell = {exists: bool, accel: f32, relpos: f32}
+  type cell = {exists: bool, reached_bottom: bool, accel: f32, relpos: f32}
 
   local def step_accel: f32 -> f32 = (+ 9.8 / 10000)
 
@@ -24,15 +24,18 @@ module gravity = mk_stencil {
                          match bottom
                          case #some cell_bottom ->
                            if cell_bottom.exists
-                           then cell
+                           then if cell_bottom.reached_bottom
+                                then cell with reached_bottom = true
+                                else cell
                            else cell with exists = false
-                         case #none -> cell)
+                         case #none -> cell with reached_bottom = true)
     else seq.get neighbors
                  (\(top: maybe.t cell) _ _ _ ->
                     match top
                     case #some cell_top ->
                       if cell_top.relpos > 1
-                      then cell_top with relpos = cell_top.relpos - 1
+                      then let relpos' = cell_top.relpos - 1
+                           in cell_top with relpos = relpos'
                       else cell
                     case #none -> cell)
 
@@ -49,7 +52,7 @@ module gravity = mk_stencil {
       let (rng, relpos) = if exists
                           then dist.rand (0, 0.999) rng
                           else (rng, 0)
-      in (rng, {exists, accel=0f32, relpos})
+      in (rng, {exists, reached_bottom=false, accel=0f32, relpos})
   }
 }
 
