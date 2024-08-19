@@ -63,7 +63,7 @@ module gravity = mk_stencil_multipass {
 
   def render_cell (cell: cell) =
     if cell.exists
-    then let secondary_color = f32.max 0 (1 - cell.weight / 10)
+    then let secondary_color = f32.max 0 (1 - cell.weight / 20)
          in argb.from_rgba 1 secondary_color secondary_color 1
     else argb.black
 
@@ -72,13 +72,14 @@ module gravity = mk_stencil_multipass {
     def random_cell rng =
       let (rng, k) = dist_i32.rand (0, 9) rng
       let exists = k == 0
-      let (rng, accel, relpos) =
+      let (rng, weight, accel, relpos) =
         if exists
-        then let (rng, accel) = dist.rand (0, 0.999) rng
+        then let (rng, weight) = dist.rand (1, 9) rng
+             let (rng, accel) = dist.rand (0, 0.999) rng
              let (rng, relpos) = dist.rand (0, 0.999) rng
-             in (rng, accel, relpos)
-        else (rng, 0, 0)
-      in (rng, {exists, weight=1f32, accel, relpos})
+             in (rng, weight, accel, relpos)
+        else (rng, 0, 0, 0)
+      in (rng, {exists, weight, accel, relpos})
   }
 }
 
