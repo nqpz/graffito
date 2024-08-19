@@ -10,7 +10,7 @@ import "../../src/utils"
 module gravity = mk_stencil_multipass {
   open stencil_kinds.cross
 
-  type cell = {exists: bool, weight: f32, accel: f32, relpos: f32}
+  type cell = {rng: rng, exists: bool, weight: f32, accel: f32, relpos: f32}
 
   local def step_accel: f32 -> f32 = (+ 9.8 / 10000)
 
@@ -18,6 +18,12 @@ module gravity = mk_stencil_multipass {
     let relpos' = cell.relpos + cell.accel
     in (cell with accel = step_accel cell.accel
              with relpos = relpos')
+
+  local def random_existing_cell rng =
+    let (rng, weight) = dist.rand (1, 9) rng
+    let (rng, accel) = dist.rand (0, 0.999) rng
+    let (rng, relpos) = dist.rand (0, 0.999) rng
+    in (rng, {rng, exists=true, weight, accel, relpos})
 
   def new_cell is_first_pass (cell: cell) neighbors =
     let update_relpos_accel' c = if is_first_pass
@@ -27,7 +33,7 @@ module gravity = mk_stencil_multipass {
     let replace_with_cell_top (cell_top: cell) =
       cell_top with relpos = cell_top.relpos - 1
 
-    let if_cell_top f f_fallback =
+    let if_cell_top (f: cell -> cell) (f_fallback: () -> cell) =
       let fallback () = (f_fallback (), false)
       in seq.get neighbors
                  (\(top: maybe.t cell) _ _ _ ->
@@ -36,7 +42,7 @@ module gravity = mk_stencil_multipass {
                       if cell_top.exists
                       then let cell_top = update_relpos_accel' cell_top
                            in if cell_top.relpos >= 1
-                              then let cell_new = f cell_top
+                              then let cell_new = f cell_top with rng = cell.rng
                                    in (cell_new, cell_new.relpos >= 1)
                               else fallback ()
                       else fallback ()
@@ -59,7 +65,12 @@ module gravity = mk_stencil_multipass {
                                with weight = weight_merged)
                     (const cell)
        else if_cell_top replace_with_cell_top
-                        (const cell)
+                        (\() ->
+                           let (rng, k) = dist_i32.rand (0, 9999) cell.rng
+                           in if k == 0
+                              then let (_, cell_new) = random_existing_cell rng
+                                   in cell_new
+                              else cell with rng = rng)
 
   def render_cell (cell: cell) =
     if cell.exists
@@ -71,15 +82,9 @@ module gravity = mk_stencil_multipass {
     type cell = cell
     def random_cell rng =
       let (rng, k) = dist_i32.rand (0, 9) rng
-      let exists = k == 0
-      let (rng, weight, accel, relpos) =
-        if exists
-        then let (rng, weight) = dist.rand (1, 9) rng
-             let (rng, accel) = dist.rand (0, 0.999) rng
-             let (rng, relpos) = dist.rand (0, 0.999) rng
-             in (rng, weight, accel, relpos)
-        else (rng, 0, 0, 0)
-      in (rng, {exists, weight, accel, relpos})
+      in if k == 0
+         then random_existing_cell rng
+         else (rng, {rng, exists=false, weight=0f32, accel=0f32, relpos=0f32})
   }
 }
 
