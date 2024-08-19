@@ -23,48 +23,43 @@ module gravity = mk_stencil_multipass {
     let update_relpos_accel' c = if is_first_pass
                                  then update_relpos_accel c
                                  else c
-    let maybe_replace_with_cell_top (cell_top: cell) (get_cell_fallback: () -> cell) =
-      if cell_top.exists && cell_top.relpos >= 1
-      then let cell_new = cell_top with relpos = cell_top.relpos - 1
-           in (cell_new, cell_new.relpos >= 1)
-      else (get_cell_fallback (), false)
 
-    let cell_top_maybe: maybe.t cell =
-      seq.get neighbors
-              (\(top: maybe.t cell) _ _ _ ->
-                 match top
-                 case #some cell_top ->
-                   #some (update_relpos_accel' cell_top)
-                 case #none ->
-                   #none)
+    let replace_with_cell_top (cell_top: cell) =
+      cell_top with relpos = cell_top.relpos - 1
+
+    let if_cell_top f f_fallback =
+      let fallback () = (f_fallback (), false)
+      in seq.get neighbors
+                 (\(top: maybe.t cell) _ _ _ ->
+                    match top
+                    case #some cell_top ->
+                      if cell_top.exists
+                      then let cell_top = update_relpos_accel' cell_top
+                           in if cell_top.relpos >= 1
+                              then let cell_new = f cell_top
+                                   in (cell_new, cell_new.relpos >= 1)
+                              else fallback ()
+                      else fallback ()
+                    case #none ->
+                   fallback ())
+
     in if cell.exists
        then let cell = update_relpos_accel' cell
             in if cell.relpos >= 1
-               then match cell_top_maybe
-                    case #some cell_top ->
-                      maybe_replace_with_cell_top cell_top (const (cell with exists = false))
-                    case #none ->
-                      (cell with exists = false, false)
-               else match cell_top_maybe
-                    case #some cell_top ->
-                      if cell_top.exists && cell_top.relpos >= 1
-                      then let weight_merged = cell.weight + cell_top.weight
-                           let cell_merged = cell with accel = (cell.accel * cell.weight
-                                                                + cell_top.accel * cell_top.weight)
-                                                               / weight_merged
-                                                  with relpos = (cell.relpos * cell.weight
-                                                                 + cell_top.relpos * cell_top.weight)
-                                                                / weight_merged
-                                                  with weight = weight_merged
-                           in (cell_merged, cell_merged.relpos >= 1)
-                      else (cell, false)
-                    case #none ->
-                      (cell, false)
-    else match cell_top_maybe
-         case #some cell_top ->
-           maybe_replace_with_cell_top cell_top (const cell)
-         case #none ->
-           (cell, false)
+               then if_cell_top replace_with_cell_top
+                                (\() -> cell with exists = false)
+               else if_cell_top
+                    (\cell_top ->
+                       let weight_merged = cell.weight + cell_top.weight
+                       let avg_weighted f = (f cell * cell.weight
+                                             + f cell_top * cell_top.weight)
+                                            / weight_merged
+                       in cell with accel = avg_weighted (.accel)
+                               with relpos = avg_weighted (.relpos)
+                               with weight = weight_merged)
+                    (const cell)
+       else if_cell_top replace_with_cell_top
+                        (const cell)
 
   def render_cell (cell: cell) =
     if cell.exists
