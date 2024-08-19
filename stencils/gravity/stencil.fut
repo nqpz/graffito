@@ -12,7 +12,7 @@ module gravity = mk_stencil_multipass {
 
   type cell = {rng: rng, exists: bool, weight: f32, accel: f32, relpos: f32}
 
-  local def step_accel: f32 -> f32 = (+ 9.8 / 10000)
+  local def step_accel: f32 -> f32 = (+ 9.8 / 1000)
 
   local def update_relpos_accel (cell: cell) =
     let relpos' = cell.relpos + cell.accel
