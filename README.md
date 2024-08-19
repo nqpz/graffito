@@ -28,6 +28,8 @@ The programs go in the `bin` directory:
 - `bin/producerconsumer`: Glittering small movements.
 - `rain`: Blue, long droplets.
 - `collatz`: A quiet sea (takes a while to get started).
+- `gravity`: A simple implementation of gravity as we know it.  Can
+  require multiple passes of the stencil.
 
 Pass `--help` to any program to see which options can be changed.
 
