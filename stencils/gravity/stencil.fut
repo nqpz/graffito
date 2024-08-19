@@ -47,7 +47,12 @@ module gravity = mk_stencil_multipass {
                               else fallback ()
                       else fallback ()
                     case #none ->
-                   fallback ())
+                      ((let (rng, k) = dist_i32.rand (0, 9) cell.rng
+                        in if k == 0
+                           then let (_, cell_new) = random_existing_cell rng
+                                in cell_new
+                           else f_fallback () with rng = rng),
+                       false))
 
     in if cell.exists
        then let cell = update_relpos_accel' cell
@@ -65,12 +70,7 @@ module gravity = mk_stencil_multipass {
                                with weight = weight_merged)
                     (const cell)
        else if_cell_top replace_with_cell_top
-                        (\() ->
-                           let (rng, k) = dist_i32.rand (0, 9999) cell.rng
-                           in if k == 0
-                              then let (_, cell_new) = random_existing_cell rng
-                                   in cell_new
-                              else cell with rng = rng)
+                        (const cell)
 
   def render_cell (cell: cell) =
     if cell.exists
@@ -80,11 +80,7 @@ module gravity = mk_stencil_multipass {
 
   open create_random_cells {
     type cell = cell
-    def random_cell rng =
-      let (rng, k) = dist_i32.rand (0, 9) rng
-      in if k == 0
-         then random_existing_cell rng
-         else (rng, {rng, exists=false, weight=0f32, accel=0f32, relpos=0f32})
+    def random_cell rng = (rng, {rng, exists=false, weight=0f32, accel=0f32, relpos=0f32})
   }
 }
 
