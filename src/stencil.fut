@@ -38,9 +38,7 @@ module type stencil_input = {
 module type stencil_input_multipass = {
   include stencil_input_base
 
-  val new_cell: cell -> seq.elems (maybe.t cell) -> (cell, bool)
-
-  val reset_state: cell -> cell
+  val new_cell: bool -> cell -> seq.elems (maybe.t cell) -> (cell, bool)
 }
 
 module type stencil = {
@@ -92,16 +90,15 @@ module mk_stencil_multipass (stencil_input: stencil_input_multipass):
   open mk_step_cell stencil_input
 
   def step [h][w] (cells: *[h][w]cell): *[h][w]cell =
-    let (cells', _) =
-      loop (cells, needs_another_pass) = (cells, true)
+    let (cells', _, _) =
+      loop (cells, is_first_pass, needs_another_pass) = (cells, true, true)
       while needs_another_pass
       do let (cells', needs_another_pass_cells) =
-           unzip (flatten (map2 (map2 (step_cell new_cell cells))
+           unzip (flatten (map2 (map2 (step_cell (new_cell is_first_pass) cells))
                                 cells
                                 (tabulate_2d h w (\y x -> (y, x)))))
-         in (unflatten cells',
-             or needs_another_pass_cells)
-    in map (map reset_state) cells'
+         in (unflatten cells', false, or needs_another_pass_cells)
+    in cells'
 
   def render [h][w]: [h][w]cell -> [h][w]argb.colour =
     map (map render_cell)

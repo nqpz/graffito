@@ -10,7 +10,7 @@ import "../../src/utils"
 module gravity = mk_stencil_multipass {
   open stencil_kinds.cross
 
-  type cell = {exists: bool, weight: f32, is_first_calculation: bool, accel: f32, relpos: f32}
+  type cell = {exists: bool, weight: f32, accel: f32, relpos: f32}
 
   local def step_accel: f32 -> f32 = (+ 9.8 / 10000)
 
@@ -19,10 +19,8 @@ module gravity = mk_stencil_multipass {
     in (cell with accel = step_accel cell.accel
              with relpos = relpos')
 
-  def reset_state (cell: cell) = cell with is_first_calculation = true
-
-  def new_cell (cell: cell) neighbors =
-    let update_relpos_accel' c = if c.is_first_calculation
+  def new_cell is_first_pass (cell: cell) neighbors =
+    let update_relpos_accel' c = if is_first_pass
                                  then update_relpos_accel c
                                  else c
     let cell_top_maybe: maybe.t cell =
@@ -40,14 +38,11 @@ module gravity = mk_stencil_multipass {
                     case #some cell_top ->
                       if cell_top.exists && cell_top.relpos >= 1
                       then let cell_new = cell_top with relpos = cell_top.relpos - 1
-                           in (cell_new with is_first_calculation = false,
-                               cell_new.relpos >= 1)
-                      else (cell with is_first_calculation = false
-                                 with exists = false,
+                           in (cell_new, cell_new.relpos >= 1)
+                      else (cell with exists = false,
                             false)
                     case #none ->
-                      (cell with is_first_calculation = false
-                            with exists = false,
+                      (cell with exists = false,
                        false)
                else match cell_top_maybe
                     case #some cell_top ->
@@ -60,24 +55,18 @@ module gravity = mk_stencil_multipass {
                                                                  + cell_top.relpos * cell_top.weight)
                                                                 / weight_merged
                                                   with weight = weight_merged
-                           in (cell_merged with is_first_calculation = false,
-                               cell_merged.relpos >= 1)
-                      else (cell with is_first_calculation = false,
-                            false)
+                           in (cell_merged, cell_merged.relpos >= 1)
+                      else (cell, false)
                     case #none ->
-                      (cell with is_first_calculation = false,
-                       false)
+                      (cell, false)
     else match cell_top_maybe
          case #some cell_top ->
            if cell_top.exists && cell_top.relpos >= 1
            then let cell_top = cell_top with relpos = cell_top.relpos - 1
-                in (cell_top with is_first_calculation = false,
-                    cell_top.relpos >= 1)
-           else (cell with is_first_calculation = false,
-                 false)
+                in (cell_top, cell_top.relpos >= 1)
+           else (cell, false)
          case #none ->
-           (cell with is_first_calculation = false,
-            false)
+           (cell, false)
 
   def render_cell (cell: cell) =
     if cell.exists
@@ -96,7 +85,7 @@ module gravity = mk_stencil_multipass {
              let (rng, relpos) = dist.rand (0, 0.999) rng
              in (rng, accel, relpos)
         else (rng, 0, 0)
-      in (rng, {exists, weight=1f32, is_first_calculation=true, accel, relpos})
+      in (rng, {exists, weight=1f32, accel, relpos})
   }
 }
 
