@@ -10,7 +10,7 @@ import "../../src/utils"
 module gravity = mk_stencil_multipass {
   open stencil_kinds.above
 
-  type cell = {rng: rng, exists: bool, weight: f32, accel: f32, relpos: f32}
+  type cell = {rng: rng, weight: f32, accel: f32, relpos: f32}
 
   local def step_accel: f32 -> f32 = (+ 9.8 / 1000)
 
@@ -23,7 +23,7 @@ module gravity = mk_stencil_multipass {
     let (rng, weight) = dist.rand (1, 9) rng
     let (rng, accel) = dist.rand (0, 0.999) rng
     let (rng, relpos) = dist.rand (0, 0.999) rng
-    in (rng, {rng, exists=true, weight, accel, relpos})
+    in (rng, {rng, weight, accel, relpos})
 
   def new_cell is_first_pass (cell: cell) neighbors =
     let update_relpos_accel' c = if is_first_pass
@@ -39,7 +39,7 @@ module gravity = mk_stencil_multipass {
                  (\(top: maybe.t cell) ->
                     match top
                     case #some cell_top ->
-                      if cell_top.exists
+                      if cell_top.weight != 0
                       then let cell_top = update_relpos_accel' cell_top
                            in if cell_top.relpos >= 1
                               then let cell_new = f cell_top with rng = cell.rng
@@ -54,11 +54,11 @@ module gravity = mk_stencil_multipass {
                            else f_fallback () with rng = rng),
                        false))
 
-    in if cell.exists
+    in if cell.weight != 0
        then let cell = update_relpos_accel' cell
             in if cell.relpos >= 1
                then if_cell_top replace_with_cell_top
-                                (\() -> cell with exists = false)
+                                (\() -> cell with weight = 0)
                else if_cell_top
                     (\cell_top ->
                        let weight_merged = cell.weight + cell_top.weight
@@ -73,14 +73,14 @@ module gravity = mk_stencil_multipass {
                         (const cell)
 
   def render_cell (cell: cell) =
-    if cell.exists
+    if cell.weight != 0
     then let secondary_color = f32.max 0 (1 - cell.weight / 20)
          in argb.from_rgba 1 secondary_color secondary_color 1
     else argb.black
 
   open create_random_cells {
     type cell = cell
-    def random_cell rng = (rng, {rng, exists=false, weight=0f32, accel=0f32, relpos=0f32})
+    def random_cell rng = (rng, {rng, weight=0f32, accel=0f32, relpos=0f32})
   }
 }
 
