@@ -8,7 +8,7 @@ import "../../src/stencil_kinds"
 import "../../src/utils"
 
 module gravity = mk_stencil_multipass {
-  open stencil_kinds.cross
+  open stencil_kinds.above
 
   type cell = {rng: rng, exists: bool, weight: f32, accel: f32, relpos: f32}
 
@@ -36,7 +36,7 @@ module gravity = mk_stencil_multipass {
     let if_cell_top (f: cell -> cell) (f_fallback: () -> cell) =
       let fallback () = (f_fallback (), false)
       in seq.get neighbors
-                 (\(top: maybe.t cell) _ _ _ ->
+                 (\(top: maybe.t cell) ->
                     match top
                     case #some cell_top ->
                       if cell_top.exists
