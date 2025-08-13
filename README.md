@@ -30,6 +30,7 @@ The programs go in the `bin` directory:
 - `collatz`: A quiet sea (takes a while to get started).
 - `gravity`: A simple implementation of gravity as we know it.  Can
   require multiple passes of the stencil.
+- `squarespiral`: Many spiraling square shapes.
 
 Pass `--help` to any program to see which options can be changed.
 
