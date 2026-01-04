@@ -31,6 +31,7 @@ The programs go in the `bin` directory:
 - `gravity`: A simple implementation of gravity as we know it.  Can
   require multiple passes of the stencil.
 - `squarespiral`: Many spiraling square shapes.
+- `coralreef`: Shifting colors under the sea.
 
 Pass `--help` to any program to see which options can be changed.
 
