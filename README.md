@@ -1,6 +1,6 @@
 # graffito
 
-![](screenshot.png)
+![](screenshots/gameoflifeprob.png)
 
 A small cellular automaton framework for quick design and visualization.
 
