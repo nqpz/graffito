@@ -16,16 +16,16 @@ Then run `make` to build all programs.
 
 The programs go in the `bin` directory:
 
-- `bin/template`: A small template with comments in order to get started.
-- `bin/steal`: An area-stealing algorithm, kind of.
-- `bin/routefinder`: Visualize route finding.
-- `bin/gameoflifeprob`: A probabilistic Game of Life.
-- `bin/gameoflife`: A very basic, no-frills implementation of Game of Life.
-- `bin/closingframe`: A growing black frame around a square of colors.
-- `bin/diamonds`: Growing diamonds.
-- `bin/consistencyfier`: Not sure yet.
-- `bin/lines`: Scraggly lines.
-- `bin/producerconsumer`: Glittering small movements.
+- `template`: A small template with comments in order to get started.
+- `steal`: An area-stealing algorithm, kind of.
+- `routefinder`: Visualize route finding.
+- `gameoflifeprob`: A probabilistic Game of Life.
+- `gameoflife`: A very basic, no-frills implementation of Game of Life.
+- `closingframe`: A growing black frame around a square of colors.
+- `diamonds`: Growing diamonds.
+- `consistencyfier`: Not sure yet.
+- `lines`: Scraggly lines.
+- `producerconsumer`: Glittering small movements.
 - `rain`: Blue, long droplets.
 - `collatz`: A quiet sea (takes a while to get started).
 - `gravity`: A simple implementation of gravity as we know it.  Can
