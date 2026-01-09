@@ -8,16 +8,28 @@ A small cellular automaton framework for quick design and visualization.
 
 ![](screenshots/gameoflifeprob.png)
 
-Requires [Futhark](http://futhark-lang.org) and SDL2 and SDL2-ttf
-libraries with associated header files.
-
 
 ## Building and running
 
-First run `futhark pkg sync` once.
+Dependencies:
 
-Then run `make` to build all programs.  You can find them in the `bin`
-directory.  Here's a curated list of the coolest-looking ones:
+- The [futhark](http://futhark-lang.org) compiler
+- A C compiler
+- SDL2 and SDL2-ttf libraries with associated header files
+- Python
+- The xxd hex dump utility
+
+You can either
+- install these dependencies manually on your system of choice, or
+- use the associated shell.nix file with [Nix](https://nixos.org/):
+  `nix-shell -p futhark --run nix-shell`
+
+Once you have the dependencies under control, run `futhark pkg sync`
+once to fetch pinned Futhark package dependencies.
+
+Then run `make` to build all cellular automata in the repository.  You
+can find the resulting programs in the `bin` directory.  Here's a
+curated list of the coolest-looking ones:
 
 - `steal`: An area-stealing algorithm, kind of.
 - `coralreef`: Shifting colors under the sea.
@@ -25,7 +37,7 @@ directory.  Here's a curated list of the coolest-looking ones:
 - `rain`: Blue, long droplets.
 
 Here's a template with some added documentation for what the different
-parts mean:
+parts mean, useful for getting started on your own:
 
 - `template`: A small template with comments in order to get started.
 
@@ -48,6 +60,14 @@ The rest haven't ended up amazing but might still give some inspiration:
 - `producerconsumer`: Glittering small movements.
 
 Pass `--help` to any program to see which options can be changed.
+
+By default, graffito uses [OpenCL](https://www.khronos.org/opencl/) as
+its backend to compute the animations.  You can change the backend by
+setting the `LYS_BACKEND` environment variable before calling `make`.
+This is useful if you don't have OpenCL, or if you want to use something
+else.  See [the lys GitHub
+page](https://github.com/diku-dk/lys?tab=readme-ov-file#configuring-the-backend)
+for the supported backends.
 
 Controls in the visualizations:
 
