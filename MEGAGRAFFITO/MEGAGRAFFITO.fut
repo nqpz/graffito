@@ -30,8 +30,8 @@ module lys: lys with text_content = text_content = {
                       | #lines stencils.lines.lys.state
                       | #producerconsumer stencils.producerconsumer.lys.state
                       | #rain stencils.rain.lys.state
-                      -- | #closingframe stencils.closingframe.lys.state -- broken?
-                      -- | #diamonds stencils.diamonds.lys.state
+                      | #closingframe stencils.closingframe.lys.state
+                      | #diamonds stencils.diamonds.lys.state
 
   type~ state = {seed: u32, h: i64, w: i64, stencil: stencil_state}
 
@@ -49,7 +49,9 @@ module lys: lys with text_content = text_content = {
                   case 5 -> #consistencyfier (stencils.consistencyfier.lys.init seed h w)
                   case 6 -> #lines (stencils.lines.lys.init seed h w)
                   case 7 -> #producerconsumer (stencils.producerconsumer.lys.init seed h w)
-                  case _ -> #rain (stencils.rain.lys.init seed h w)
+                  case 8 -> #rain (stencils.rain.lys.init seed h w)
+                  case 9 -> #closingframe (stencils.closingframe.lys.init seed h w)
+                  case _ -> #diamonds (stencils.diamonds.lys.init seed h w)
     in {seed, h, w, stencil}
 
   def next_stencil (s: state): state =
@@ -62,11 +64,13 @@ module lys: lys with text_content = text_content = {
                      case #consistencyfier _ -> #lines (stencils.lines.lys.init s.seed s.h s.w)
                      case #lines _ -> #producerconsumer (stencils.producerconsumer.lys.init s.seed s.h s.w)
                      case #producerconsumer _ -> #rain (stencils.rain.lys.init s.seed s.h s.w)
-                     case #rain _ -> #template (stencils.template.lys.init s.seed s.h s.w)
+                     case #rain _ -> #closingframe (stencils.closingframe.lys.init s.seed s.h s.w)
+                     case #closingframe _ -> #diamonds (stencils.diamonds.lys.init s.seed s.h s.w)
+                     case #diamonds _ -> #template (stencils.template.lys.init s.seed s.h s.w)
 
   def prev_stencil (s: state): state =
     s with stencil = match s.stencil
-                     case #template _ -> #rain (stencils.rain.lys.init s.seed s.h s.w)
+                     case #template _ -> #diamonds (stencils.diamonds.lys.init s.seed s.h s.w)
                      case #steal _ -> #template (stencils.template.lys.init s.seed s.h s.w)
                      case #gameoflife _ -> #steal (stencils.steal.lys.init s.seed s.h s.w)
                      case #gameoflifeprob _ -> #gameoflife (stencils.gameoflife.lys.init s.seed s.h s.w)
@@ -75,6 +79,8 @@ module lys: lys with text_content = text_content = {
                      case #lines _ -> #consistencyfier (stencils.consistencyfier.lys.init s.seed s.h s.w)
                      case #producerconsumer _ -> #lines (stencils.lines.lys.init s.seed s.h s.w)
                      case #rain _ -> #producerconsumer (stencils.producerconsumer.lys.init s.seed s.h s.w)
+                     case #closingframe _ -> #rain (stencils.rain.lys.init s.seed s.h s.w)
+                     case #diamonds _ -> #closingframe (stencils.closingframe.lys.init s.seed s.h s.w)
 
   def resize (h: i64) (w: i64) (s: state): state =
     s with h = h
@@ -89,6 +95,8 @@ module lys: lys with text_content = text_content = {
                      case #lines s' -> #lines (stencils.lines.lys.resize h w s')
                      case #producerconsumer s' -> #producerconsumer (stencils.producerconsumer.lys.resize h w s')
                      case #rain s' -> #rain (stencils.rain.lys.resize h w s')
+                     case #closingframe s' -> #closingframe (stencils.closingframe.lys.resize h w s')
+                     case #diamonds s' -> #diamonds (stencils.diamonds.lys.resize h w s')
 
   def stencil_event (e: event) (s: state): state =
     s with stencil = match s.stencil
@@ -101,6 +109,8 @@ module lys: lys with text_content = text_content = {
                      case #lines s' -> #lines (stencils.lines.lys.event e s')
                      case #producerconsumer s' -> #producerconsumer (stencils.producerconsumer.lys.event e s')
                      case #rain s' -> #rain (stencils.rain.lys.event e s')
+                     case #closingframe s' -> #closingframe (stencils.closingframe.lys.event e s')
+                     case #diamonds s' -> #diamonds (stencils.diamonds.lys.event e s')
 
   def event (e: event) (s: state): state =
     match e
@@ -123,6 +133,8 @@ module lys: lys with text_content = text_content = {
     case #lines s' -> stencils.lines.lys.render s'
     case #producerconsumer s' -> stencils.producerconsumer.lys.render s'
     case #rain s' -> stencils.rain.lys.render s'
+    case #closingframe s' -> stencils.closingframe.lys.render s'
+    case #diamonds s' -> stencils.diamonds.lys.render s'
 
   type text_content = text_content
 
@@ -137,6 +149,8 @@ module lys: lys with text_content = text_content = {
     ++ "|lines"
     ++ "|producerconsumer"
     ++ "|rain"
+    ++ "|closingframe"
+    ++ "|diamonds"
     ++ "]\n"
     ++ stencils.template.lys.text_format ()
 
@@ -151,6 +165,8 @@ module lys: lys with text_content = text_content = {
     case #lines s' -> (6, stencils.lines.lys.text_content fps s')
     case #producerconsumer s' -> (7, stencils.producerconsumer.lys.text_content fps s')
     case #rain s' -> (8, stencils.rain.lys.text_content fps s')
+    case #closingframe s' -> (9, stencils.closingframe.lys.text_content fps s')
+    case #diamonds s' -> (10, stencils.diamonds.lys.text_content fps s')
 
   def text_colour = const argb.yellow
 }
