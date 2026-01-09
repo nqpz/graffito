@@ -23,4 +23,4 @@ _clean/%:
 	$(MAKE) clean -C stencils$(shell echo $@ | sed 's/^_clean//')
 
 clean: $(CLEANS)
-	rm -rf bin
+	rm -rf bin *.lyscache
