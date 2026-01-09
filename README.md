@@ -2,7 +2,7 @@
 
 ![](screenshot.png)
 
-A small stencil framework for quick design and visualization.
+A small cellular automaton framework for quick design and visualization.
 
 Requires [Futhark](http://futhark-lang.org) and SDL2 and SDL2-ttf
 libraries with associated header files.
@@ -42,7 +42,7 @@ Controls in the visualizations:
 - R: Reset
 
 
-## Adding stencils
+## Adding automata
 
 - Create a new directory under `stencils/` with a `stencil.fut` file and
   a Makefile.
@@ -52,4 +52,4 @@ Controls in the visualizations:
 ## MEGAGRAFFITO
 
 See also the [MEGAGRAFFITO](./MEGAGRAFFITO) subdirectory for a single
-program containing all the stencils (not built by default).
+program containing all the automata (not built by default).
