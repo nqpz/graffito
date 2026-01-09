@@ -1,12 +1,12 @@
 # graffito
 
+A small cellular automaton framework for quick design and visualization.
+
 ![](screenshots/steal.png)
 
 ![](screenshots/coralreef.png)
 
 ![](screenshots/gameoflifeprob.png)
-
-A small cellular automaton framework for quick design and visualization.
 
 Requires [Futhark](http://futhark-lang.org) and SDL2 and SDL2-ttf
 libraries with associated header files.
