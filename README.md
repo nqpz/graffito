@@ -16,26 +16,36 @@ libraries with associated header files.
 
 First run `futhark pkg sync` once.
 
-Then run `make` to build all programs.
+Then run `make` to build all programs.  You can find them in the `bin`
+directory.  Here's a curated list of the coolest-looking ones:
 
-The programs go in the `bin` directory:
+- `steal`: An area-stealing algorithm, kind of.
+- `coralreef`: Shifting colors under the sea.
+- `gameoflifeprob`: A probabilistic Game of Life.
+- `rain`: Blue, long droplets.
+
+Here's a template with some added documentation for what the different
+parts mean:
 
 - `template`: A small template with comments in order to get started.
-- `steal`: An area-stealing algorithm, kind of.
-- `routefinder`: Visualize route finding.
-- `gameoflifeprob`: A probabilistic Game of Life.
-- `gameoflife`: A very basic, no-frills implementation of Game of Life.
-- `closingframe`: A growing black frame around a square of colors.
-- `diamonds`: Growing diamonds.
-- `consistencyfier`: Not sure yet.
+
+These ones are also pretty neat:
+
+- `routefinder`: Originally made to visualize route finding, but ended
+  up being more about building mountains.
 - `lines`: Scraggly lines.
-- `producerconsumer`: Glittering small movements.
-- `rain`: Blue, long droplets.
+- `squarespiral`: Many spiraling square shapes.
 - `collatz`: A quiet sea (takes a while to get started).
 - `gravity`: A simple implementation of gravity as we know it.  Can
   require multiple passes of the stencil.
-- `squarespiral`: Many spiraling square shapes.
-- `coralreef`: Shifting colors under the sea.
+
+The rest haven't ended up amazing but might still give some inspiration:
+
+- `closingframe`: A growing black frame around a square of colors.
+- `gameoflife`: A very basic, no-frills implementation of Game of Life.
+- `diamonds`: Growing diamonds.
+- `consistencyfier`: Not sure yet.
+- `producerconsumer`: Glittering small movements.
 
 Pass `--help` to any program to see which options can be changed.
 
