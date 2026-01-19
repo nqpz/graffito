@@ -74,6 +74,8 @@ Controls in the visualizations:
 - Space: Pause
 - S: Step once
 - R: Reset
+- Mouse wheel: Zoom in and out
+- Mouse: Move around when zoomed in
 
 
 ## Adding automata

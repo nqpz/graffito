@@ -8,7 +8,7 @@ local type text_content = i32
 module mk_stencil_lys (stencil: stencil with create_input = rng
                                         with create_output = rng)
        : lys with text_content = text_content = {
-  type state_sized [h][w] = {h: i64, w: i64, rng: rng, time: f32, paused: bool, cells: [h][w]stencil.cell}
+  type state_sized [h][w] = {h: i64, w: i64, rng: rng, time: f32, paused: bool, cells: [h][w]stencil.cell, zoom_factor: f32, zoom_center: {x: f32, y: f32}}
   type~ state = state_sized [][]
 
   def grab_mouse = false
@@ -16,7 +16,8 @@ module mk_stencil_lys (stencil: stencil with create_input = rng
   def init (seed: u32) (h: i64) (w: i64): state =
     let rng = rnge.rng_from_seed [i32.u32 seed]
     let (cells, rng) = stencil.create_cells h w rng
-    in {h, w, rng, time=0, paused=false, cells}
+    in {h, w, rng, time=0, paused=false, cells,
+        zoom_factor=1, zoom_center={x=f32.i64 w / 2, y=f32.i64 h / 2}}
 
   def resize (h: i64) (w: i64) (s: state): state =
     let (cells, rng) = stencil.create_cells h w s.rng
@@ -50,10 +51,26 @@ module mk_stencil_lys (stencil: stencil with create_input = rng
            in s with rng = rng
                 with cells = cells
       else s
+    case #mouse {buttons=_, x, y} ->
+      s with zoom_center = {x=s.zoom_center.x + (r32 x - s.zoom_center.x) / s.zoom_factor,
+                            y=s.zoom_center.y + (r32 y - s.zoom_center.y) / s.zoom_factor}
+    case #wheel {dx=_, dy} ->
+      s with zoom_factor = f32.max 1 (s.zoom_factor + r32 dy * 0.1)
     case _ -> s
 
   def render (s: state): [][]argb.colour =
-    stencil.render s.cells
+    let pixels = stencil.render s.cells
+    let zoom_factor' = i64.f32 s.zoom_factor
+    in if zoom_factor' == 1
+       then pixels
+       else let offset_y = i64.f32 s.zoom_center.y - s.h / zoom_factor' / 2
+            let offset_x = i64.f32 s.zoom_center.x - s.w / zoom_factor' / 2
+            in tabulate_2d s.h s.w (\y x ->
+                                      let y' = offset_y + y / zoom_factor'
+                                      let x' = offset_x + x / zoom_factor'
+                                      in if y' >= 0 && y' < s.h && x' >= 0 && x' < s.w
+                                         then pixels[y'][x']
+                                         else argb.black)
 
   type text_content = text_content
 
