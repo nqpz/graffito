@@ -78,11 +78,12 @@ Controls in the visualizations:
 - Mouse: Move around when zoomed in
 
 
-## Adding automata
+## Contributing: Adding new automata
 
 - Create a new directory under `stencils/` with a `stencil.fut` file and
   a Makefile.
 - Extend the root `Makefile`.
+- Create a pull request.  I'll accept most things!
 
 
 ## MEGAGRAFFITO
