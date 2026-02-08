@@ -18,16 +18,16 @@ Dependencies:
 - SDL2 and SDL2-ttf libraries with associated header files
 - Python
 - The xxd hex dump utility
+- OpenCL headers and runtime for your GPU
 
 You can either
 - install these dependencies manually on your system of choice, or
 - use the associated shell.nix file with [Nix](https://nixos.org/):
   `nix-shell -p futhark --run nix-shell`
 
-Once you have the dependencies under control, run `futhark pkg sync`
-once to fetch pinned Futhark package dependencies.
-
-Then run `make` to build all cellular automata in the repository.  You
+Once you have the dependencies under control, run `make -j` to build
+all cellular automata in the repository (this will automatically fetch
+Futhark package dependencies on the first run).  You
 can find the resulting programs in the `bin` directory.  Here's a
 curated list of the coolest-looking ones:
 
