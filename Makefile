@@ -2,13 +2,21 @@
 STENCILS=template steal gameoflife gameoflifeprob closingframe diamonds routefinder consistencyfier lines producerconsumer rain collatz gravity squarespiral coralreef
 
 
-.PHONY: all clean
+.PHONY: all clean sync
 
 MAKES=$(patsubst %,_make/%,$(STENCILS))
 BINS=$(patsubst %,bin/%,$(STENCILS))
 CLEANS=$(patsubst %,_clean/%,$(STENCILS))
 
 all: $(MAKES) bin $(BINS)
+
+$(MAKES): sync
+
+sync:
+	@if [ ! -d lib ]; then \
+		echo "Running futhark pkg sync..."; \
+		futhark pkg sync; \
+	fi
 
 _make/%:
 	$(MAKE) -C stencils$(shell echo $@ | sed 's/^_make//')
